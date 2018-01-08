@@ -1,0 +1,10 @@
+[package]
+name = "invaders"
+version = "0.1.0"
+authors = ["Les Orchard <me@lmorchard.com>"]
+
+[dependencies]
+ggez = "0.4"
+specs = "0.10"
+specs-derive = "0.1.0"
+rand = "0.3.14"

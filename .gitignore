@@ -1,0 +1,4 @@
+**/target/**
+hello.txt
+*.sw?
+*.bak
