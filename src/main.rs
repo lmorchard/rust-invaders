@@ -3,6 +3,7 @@ extern crate ggez;
 extern crate specs;
 #[macro_use]
 extern crate specs_derive;
+extern crate rand;
 
 use std::f32::consts::PI;
 use std::time::{
@@ -78,6 +79,7 @@ struct MainState<'a, 'b> {
     last_time: SystemTime,
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
+    mesh: Mesh,
 }
 
 impl<'a, 'b> MainState<'a, 'b> {
@@ -89,35 +91,26 @@ impl<'a, 'b> MainState<'a, 'b> {
         world.register::<Velocity>();
         world.register::<Sprite>();
 
-        world.create_entity()
-            .with(Position { x: 4.0, y: 200.0, r: 0.0 })
-            .with(Velocity { x: 100.0, y: 0.0, r: PI / 2.0 })
-            .with(Sprite {
-                mesh: build_player_mesh(ctx, 0.01),
-                offset: Point2::new(0.5, 0.5),
-                scale: Point2::new(100.0, 100.0),
-            })
-            .build();
-
-        world.create_entity()
-            .with(Position { x: 4.0, y: 300.0, r: 0.0 })
-            .with(Velocity { x: 150.0, y: 0.0, r: PI / 3.0 })
-            .with(Sprite {
-                mesh: build_player_mesh(ctx, 0.02),
-                offset: Point2::new(0.5, 0.5),
-                scale: Point2::new(50.0, 50.0),
-            })
-            .build();
-
-        world.create_entity()
-            .with(Position { x: 4.0, y: 100.0, r: 0.0 })
-            .with(Velocity { x: 50.0, y: 0.0, r: PI / 3.0 })
-            .with(Sprite {
-                mesh: build_player_mesh(ctx, 0.02),
-                offset: Point2::new(0.5, 0.5),
-                scale: Point2::new(50.0, 50.0),
-            })
-            .build();
+        for _idx in 0..50 {
+            let scale = 100.0 * rand::random::<f32>();
+            world.create_entity()
+                .with(Position {
+                    x: 640.0 * rand::random::<f32>(),
+                    y: 480.0 * rand::random::<f32>(),
+                    r: PI * rand::random::<f32>()
+                })
+                .with(Velocity {
+                    x: 100.0 - 200.0 * rand::random::<f32>(),
+                    y: 100.0 - 200.0 * rand::random::<f32>(),
+                    r: (PI * 0.5) - PI * rand::random::<f32>()
+                })
+                .with(Sprite {
+                    mesh: build_player_mesh(ctx, 0.01),
+                    offset: Point2::new(0.5, 0.5),
+                    scale: Point2::new(scale, scale),
+                })
+                .build();
+        }
 
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
@@ -126,6 +119,7 @@ impl<'a, 'b> MainState<'a, 'b> {
         Ok(MainState {
             world,
             dispatcher,
+            mesh: build_player_mesh(ctx, 0.01),
             last_time: SystemTime::now(),
         })
     }
@@ -154,7 +148,8 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         let sprites = self.world.read::<Sprite>();
 
         for (_ent, pos, spr) in (&*entities, &positions, &sprites).join() {
-            graphics::draw_ex(ctx, &spr.mesh, DrawParam {
+            // graphics::draw_ex(ctx, &spr.mesh, DrawParam {
+            graphics::draw_ex(ctx, &self.mesh, DrawParam {
                 dest: Point2::new(pos.x, pos.y),
                 rotation: pos.r,
                 offset: spr.offset,
