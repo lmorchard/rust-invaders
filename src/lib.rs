@@ -1,3 +1,9 @@
+extern crate ggez;
+extern crate rand;
+
+pub mod components;
+pub mod graphics;
+
 pub fn main() {
     println!("Hello world invaders");
 }
