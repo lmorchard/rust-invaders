@@ -94,29 +94,30 @@ impl<'a, 'b> MainState<'a, 'b> {
         world.register::<Sprite>();
 
         for _idx in 0..25 {
-            let scale = 100.0 * rand::random::<f32>();
-            world
-                .create_entity()
-                .with(Position {
-                    x: 640.0 * rand::random::<f32>(),
-                    y: 480.0 * rand::random::<f32>(),
-                    r: PI * rand::random::<f32>(),
-                })
-                .with(Velocity {
-                    x: 100.0 - 200.0 * rand::random::<f32>(),
-                    y: 100.0 - 200.0 * rand::random::<f32>(),
-                    r: (PI * 0.5) - PI * rand::random::<f32>(),
-                })
-                .with(Sprite {
-                    mesh: meshes::player(ctx, 0.01),
-                    offset: Point2::new(0.5, 0.5),
-                    scale: Point2::new(scale, scale),
-                })
-                .build();
+            spawn(ctx, &mut world);
         }
 
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
+            .build();
+
+        world
+            .create_entity()
+            .with(Position {
+                x: 400.0,
+                y: 500.0,
+                r: 0.0,
+            })
+            .with(Velocity {
+                x: 0.0,
+                y: 0.0,
+                r: 0.0,
+            })
+            .with(Sprite {
+                mesh: meshes::player(ctx, 0.01),
+                offset: Point2::new(0.5, 0.5),
+                scale: Point2::new(100.0, 100.0),
+            })
             .build();
 
         Ok(MainState {
@@ -134,8 +135,34 @@ impl<'a, 'b> MainState<'a, 'b> {
     }
 }
 
+fn spawn(ctx: &mut Context, world: &mut World) {
+    let scale = 50.0 + (50.0 * rand::random::<f32>());
+    world
+        .create_entity()
+        .with(Position {
+            x: 800.0 * rand::random::<f32>(),
+            y: 600.0 * rand::random::<f32>(),
+            r: PI * rand::random::<f32>(),
+        })
+        .with(Velocity {
+            x: 100.0 - 200.0 * rand::random::<f32>(),
+            y: 100.0 - 200.0 * rand::random::<f32>(),
+            r: (PI * 0.5) - PI * rand::random::<f32>(),
+        })
+        .with(Sprite {
+            mesh: if rand::random::<f32>() > 0.5 {
+                meshes::player(ctx, 1.0 / scale)
+            } else {
+                meshes::asteroid(ctx, 1.0 / scale)
+            },
+            offset: Point2::new(0.5, 0.5),
+            scale: Point2::new(scale, scale),
+        })
+        .build();
+}
+
 impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
+    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         let now = SystemTime::now();
         let dt = now.duration_since(self.last_time).unwrap();
         self.last_time = now;
@@ -146,6 +173,11 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         }
 
         self.dispatcher.dispatch(&mut self.world.res);
+
+        if rand::random::<f32>() < 0.01 {
+            spawn(ctx, &mut self.world);
+        }
+
         Ok(())
     }
 

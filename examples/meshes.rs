@@ -28,7 +28,6 @@ impl MainState {
             meshes::asteroid(ctx, LINE_WIDTH),
             meshes::asteroid(ctx, LINE_WIDTH),
             meshes::asteroid(ctx, LINE_WIDTH),
-            meshes::asteroid(ctx, LINE_WIDTH),
         ];
         Ok(MainState {
             rotation: 0.0,

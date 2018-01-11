@@ -28,12 +28,7 @@ pub fn test(ctx: &mut Context, line_width: f32) -> Mesh {
             DrawMode::Line(line_width),
             &points![(0.5, 0.0), (1.0, 1.0), (0.0, 1.0)],
         )
-        .circle(
-            DrawMode::Line(line_width),
-            Point2::new(0.5, 0.5),
-            0.5,
-            0.05,
-        )
+        .circle(DrawMode::Line(line_width), Point2::new(0.5, 0.5), 0.5, 0.05)
         .line(&points![(0.4, 0.5), (0.6, 0.5)], line_width)
         .line(&points![(0.5, 0.4), (0.5, 0.6)], line_width)
         .build(ctx)
@@ -59,7 +54,7 @@ pub fn player(ctx: &mut Context, line_width: f32) -> Mesh {
                 (0.75, 0.5),
                 (0.5625, 0.0),
                 (0.5, 0.0)
-            ]
+            ],
         )
         .build(ctx)
         .unwrap()
