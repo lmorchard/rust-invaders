@@ -2,6 +2,7 @@
 name = "invaders"
 version = "0.1.0"
 authors = ["Les Orchard <me@lmorchard.com>"]
+build = "build.rs"
 
 [dependencies]
 ggez = "0.4"
