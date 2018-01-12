@@ -1,17 +1,10 @@
 extern crate ggez;
 extern crate rand;
+extern crate specs;
+#[macro_use]
+extern crate specs_derive;
 
+pub mod resources;
 pub mod components;
+pub mod systems;
 pub mod graphics;
-
-pub fn main() {
-    println!("Hello world invaders");
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
