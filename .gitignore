@@ -2,4 +2,4 @@
 hello.txt
 *.sw?
 *.bak
-SDL.dll
+SDL2.dll
