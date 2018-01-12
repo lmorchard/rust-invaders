@@ -4,6 +4,7 @@ extern crate rand;
 extern crate specs;
 
 use std::f32::consts::PI;
+
 use std::fmt;
 use std::time::SystemTime;
 
@@ -23,21 +24,12 @@ struct MainState<'a, 'b> {
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
     paused: bool,
-    input_left: bool,
-    input_right: bool,
-    input_up: bool,
-    input_down: bool,
-    input_fire: bool,
-    input_special: bool,
 }
 
 impl<'a, 'b> fmt::Display for MainState<'a, 'b> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "paused: {}; input_left: {}; input_right: {}; input_fire: {}",
-            self.paused, self.input_left, self.input_right, self.input_fire
-        )
+        let inputs = self.world.read_resource::<Inputs>();
+        write!(f, "paused: {}; inputs: {:?}", self.paused, *inputs)
     }
 }
 
@@ -46,30 +38,48 @@ impl<'a, 'b> MainState<'a, 'b> {
         let mut world = World::new();
 
         world.add_resource(DeltaTime(0.016));
+        world.add_resource(Inputs {
+            left: false,
+            right: false,
+            up: false,
+            down: false,
+            fire: false,
+            special: false,
+        });
+
         world.register::<Position>();
         world.register::<Velocity>();
+        world.register::<Thruster>();
+        world.register::<Friction>();
+        world.register::<SpeedLimit>();
         world.register::<Sprite>();
-
-        for _idx in 0..25 {
-            spawn(ctx, &mut world);
-        }
 
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
+            .add(ThrusterSystem, "thruster", &[])
+            .add(SpeedLimitSystem, "speed_limit", &[])
+            .add(FrictionSystem, "friction", &[])
             .build();
 
         world
             .create_entity()
             .with(Position {
                 x: 400.0,
-                y: 500.0,
+                y: 400.0,
                 r: 0.0,
             })
             .with(Velocity {
                 x: 0.0,
                 y: 0.0,
-                r: 0.0,
+                r: 0.0, // PI / 3.0,
             })
+            .with(Thruster {
+                thrust: 25.0,
+                throttle: 1.0,
+                angle: PI * 0.5, // 0.0,
+            })
+            .with(SpeedLimit { max_speed: 100.0 })
+            .with(Friction { braking: 5.0 })
             .with(Sprite {
                 mesh: meshes::player(ctx, 0.01),
                 offset: Point2::new(0.5, 0.5),
@@ -82,44 +92,12 @@ impl<'a, 'b> MainState<'a, 'b> {
             dispatcher,
             last_time: SystemTime::now(),
             paused: false,
-            input_left: false,
-            input_right: false,
-            input_up: false,
-            input_down: false,
-            input_fire: false,
-            input_special: false,
         })
     }
 }
 
-fn spawn(ctx: &mut Context, world: &mut World) {
-    let scale = 50.0 + (50.0 * rand::random::<f32>());
-    world
-        .create_entity()
-        .with(Position {
-            x: 800.0 * rand::random::<f32>(),
-            y: 600.0 * rand::random::<f32>(),
-            r: PI * rand::random::<f32>(),
-        })
-        .with(Velocity {
-            x: 100.0 - 200.0 * rand::random::<f32>(),
-            y: 100.0 - 200.0 * rand::random::<f32>(),
-            r: (PI * 0.5) - PI * rand::random::<f32>(),
-        })
-        .with(Sprite {
-            mesh: if rand::random::<f32>() > 0.5 {
-                meshes::player(ctx, 1.0 / scale)
-            } else {
-                meshes::asteroid(ctx, 1.0 / scale)
-            },
-            offset: Point2::new(0.5, 0.5),
-            scale: Point2::new(scale, scale),
-        })
-        .build();
-}
-
 impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
-    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
         let now = SystemTime::now();
         let dt = now.duration_since(self.last_time).unwrap();
         self.last_time = now;
@@ -130,10 +108,6 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         }
 
         self.dispatcher.dispatch(&mut self.world.res);
-
-        if rand::random::<f32>() < 0.01 {
-            spawn(ctx, &mut self.world);
-        }
 
         Ok(())
     }
@@ -178,33 +152,35 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         _keymod: Mod,
         _repeat: bool,
     ) {
+        let mut inputs = self.world.write_resource::<Inputs>();
         match keycode {
-            Keycode::Up => self.input_up = true,
-            Keycode::W => self.input_up = true,
-            Keycode::Down => self.input_down = true,
-            Keycode::S => self.input_down = true,
-            Keycode::Left => self.input_left = true,
-            Keycode::A => self.input_left = true,
-            Keycode::Right => self.input_right = true,
-            Keycode::D => self.input_right = true,
-            Keycode::Space => self.input_fire = true,
-            Keycode::Return => self.input_special = true,
+            Keycode::Up => inputs.up = true,
+            Keycode::W => inputs.up = true,
+            Keycode::Down => inputs.down = true,
+            Keycode::S => inputs.down = true,
+            Keycode::Left => inputs.left = true,
+            Keycode::A => inputs.left = true,
+            Keycode::Right => inputs.right = true,
+            Keycode::D => inputs.right = true,
+            Keycode::Space => inputs.fire = true,
+            Keycode::Return => inputs.special = true,
             _ => (),
         };
     }
 
     fn key_up_event(&mut self, _ctx: &mut Context, keycode: Keycode, _keymod: Mod, _repeat: bool) {
+        let mut inputs = self.world.write_resource::<Inputs>();
         match keycode {
-            Keycode::Up => self.input_up = false,
-            Keycode::W => self.input_up = false,
-            Keycode::Down => self.input_down = false,
-            Keycode::S => self.input_down = false,
-            Keycode::Left => self.input_left = false,
-            Keycode::A => self.input_left = false,
-            Keycode::Right => self.input_right = false,
-            Keycode::D => self.input_right = false,
-            Keycode::Space => self.input_fire = false,
-            Keycode::Return => self.input_special = false,
+            Keycode::Up => inputs.up = false,
+            Keycode::W => inputs.up = false,
+            Keycode::Down => inputs.down = false,
+            Keycode::S => inputs.down = false,
+            Keycode::Left => inputs.left = false,
+            Keycode::A => inputs.left = false,
+            Keycode::Right => inputs.right = false,
+            Keycode::D => inputs.right = false,
+            Keycode::Space => inputs.fire = false,
+            Keycode::Return => inputs.special = false,
             _ => (),
         };
     }
@@ -239,7 +215,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
 
 pub fn main() {
     let c = conf::Conf::new();
-    let ctx = &mut Context::load_from_conf("super_simple", "ggez", c).unwrap();
+    let ctx = &mut Context::load_from_conf("invaders", "ggez", c).unwrap();
 
     ctx.print_resource_stats();
     graphics::set_background_color(ctx, (0, 0, 0, 255).into());
