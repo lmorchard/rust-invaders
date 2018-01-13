@@ -29,6 +29,9 @@ pub fn main() {
 
     ctx.print_resource_stats();
 
+    let projection = graphics::get_projection(ctx);
+    println!("PROJECTION {}", projection);
+
     let state = &mut MainState::new(ctx).unwrap();
     event::run(ctx, state).unwrap();
 }
@@ -37,6 +40,7 @@ struct MainState<'a, 'b> {
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
     paused: bool,
+    zoom: f32,
 }
 
 impl<'a, 'b> fmt::Display for MainState<'a, 'b> {
@@ -48,8 +52,7 @@ impl<'a, 'b> fmt::Display for MainState<'a, 'b> {
 
 impl<'a, 'b> MainState<'a, 'b> {
     fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
-        let resolutions = ggez::graphics::get_fullscreen_modes(ctx, 0)?;
-        println!("RESOLUTIONS {:?}", resolutions);
+        // let resolutions = ggez::graphics::get_fullscreen_modes(ctx, 0)?;
 
         let mut world = World::new();
 
@@ -87,6 +90,7 @@ impl<'a, 'b> MainState<'a, 'b> {
             world,
             dispatcher,
             paused: false,
+            zoom: 2.0,
         })
     }
 }
@@ -95,8 +99,8 @@ fn spawn_player(ctx: &mut Context, world: &mut World) {
     world
         .create_entity()
         .with(Position {
-            x: 400.0,
-            y: 400.0,
+            x: 0.0,
+            y: 0.0,
             r: 0.0,
         })
         .with(Velocity {
@@ -144,6 +148,22 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         graphics::set_background_color(ctx, graphics::BLACK);
         graphics::clear(ctx);
 
+        let (width, height) = graphics::get_size(ctx);
+        let (z_width, z_height) = (width as f32 * self.zoom, height as f32 * self.zoom);
+        let new_rect = graphics::Rect::new(
+            0.0 - (z_width / 2.0),
+            0.0 - (z_height / 2.0),
+            z_width,
+            z_height,
+        );
+        graphics::set_screen_coordinates(ctx, new_rect).unwrap();
+
+        // Hacky screen shake:
+        // let mut coords = graphics::get_screen_coordinates(ctx);
+        // coords.x = 10.0 * rand::random::<f32>();
+        // coords.y = 10.0 * rand::random::<f32>();
+        // graphics::set_screen_coordinates(ctx, coords).unwrap();
+
         graphics::set_color(ctx, graphics::WHITE)?;
 
         let entities = self.world.entities();
@@ -167,6 +187,17 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         graphics::present(ctx);
 
         Ok(())
+    }
+
+    fn resize_event(&mut self, ctx: &mut Context, width: u32, height: u32) {
+        println!("Resized screen to {}, {}", width, height);
+        let new_rect = graphics::Rect::new(
+            0.0,
+            0.0,
+            width as f32 * self.zoom,
+            height as f32 * self.zoom,
+        );
+        graphics::set_screen_coordinates(ctx, new_rect).unwrap();
     }
 
     fn focus_event(&mut self, _ctx: &mut Context, gained: bool) {

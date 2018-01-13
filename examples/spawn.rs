@@ -52,10 +52,7 @@ impl<'a, 'b> MainState<'a, 'b> {
             .add(MotionSystem, "motion", &[])
             .build();
 
-        Ok(MainState {
-            world,
-            dispatcher,
-        })
+        Ok(MainState { world, dispatcher })
     }
 }
 
