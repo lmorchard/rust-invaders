@@ -4,7 +4,6 @@ extern crate rand;
 extern crate specs;
 
 use std::f32::consts::PI;
-use std::time::SystemTime;
 
 use ggez::*;
 use ggez::graphics::{DrawParam, Point2};
@@ -16,8 +15,22 @@ use invaders::components::*;
 use invaders::systems::*;
 use invaders::resources::*;
 
+pub fn main() {
+    let mut c = conf::Conf::new();
+    c.window_setup.title = String::from("Spawn - Rust Invaders!");
+    c.window_setup.samples = conf::NumSamples::Eight;
+    c.window_setup.resizable = true;
+
+    let ctx = &mut Context::load_from_conf("spawn", "ggez", c).unwrap();
+
+    ctx.print_resource_stats();
+    graphics::set_background_color(ctx, (0, 0, 0, 255).into());
+
+    let state = &mut MainState::new(ctx).unwrap();
+    event::run(ctx, state).unwrap();
+}
+
 struct MainState<'a, 'b> {
-    last_time: SystemTime,
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
 }
@@ -39,29 +52,9 @@ impl<'a, 'b> MainState<'a, 'b> {
             .add(MotionSystem, "motion", &[])
             .build();
 
-        world
-            .create_entity()
-            .with(Position {
-                x: 400.0,
-                y: 500.0,
-                r: 0.0,
-            })
-            .with(Velocity {
-                x: 0.0,
-                y: 0.0,
-                r: 0.0,
-            })
-            .with(Sprite {
-                mesh: meshes::player(ctx, 0.01),
-                offset: Point2::new(0.5, 0.5),
-                scale: Point2::new(100.0, 100.0),
-            })
-            .build();
-
         Ok(MainState {
             world,
             dispatcher,
-            last_time: SystemTime::now(),
         })
     }
 }
@@ -94,11 +87,8 @@ fn spawn(ctx: &mut Context, world: &mut World) {
 
 impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        let now = SystemTime::now();
-        let dt = now.duration_since(self.last_time).unwrap();
-        self.last_time = now;
-
         {
+            let dt = ggez::timer::get_delta(ctx);
             let mut delta = self.world.write_resource::<DeltaTime>();
             *delta = DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
         }
@@ -136,15 +126,4 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         graphics::present(ctx);
         Ok(())
     }
-}
-
-pub fn main() {
-    let c = conf::Conf::new();
-    let ctx = &mut Context::load_from_conf("spawn", "ggez", c).unwrap();
-
-    ctx.print_resource_stats();
-    graphics::set_background_color(ctx, (0, 0, 0, 255).into());
-
-    let state = &mut MainState::new(ctx).unwrap();
-    event::run(ctx, state).unwrap();
 }

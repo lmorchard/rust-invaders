@@ -13,6 +13,21 @@ const SPACING: f32 = 150.0;
 const ROTATION_SPEED: f32 = PI / 150.0;
 const LINE_WIDTH: f32 = 0.01;
 
+pub fn main() {
+    let mut c = conf::Conf::new();
+    c.window_setup.title = String::from("Meshes - Rust Invaders!");
+    c.window_setup.samples = conf::NumSamples::Eight;
+    c.window_setup.resizable = true;
+
+    let ctx = &mut Context::load_from_conf("example_meshes", "ggez", c).unwrap();
+
+    ctx.print_resource_stats();
+    graphics::set_background_color(ctx, (0, 0, 0, 255).into());
+
+    let state = &mut MainState::new(ctx).unwrap();
+    event::run(ctx, state).unwrap();
+}
+
 struct MainState {
     rotation: f32,
     meshes: Vec<Mesh>,
@@ -70,15 +85,4 @@ impl event::EventHandler for MainState {
         graphics::present(ctx);
         Ok(())
     }
-}
-
-pub fn main() {
-    let c = conf::Conf::new();
-    let ctx = &mut Context::load_from_conf("example_meshes", "ggez", c).unwrap();
-
-    ctx.print_resource_stats();
-    graphics::set_background_color(ctx, (0, 0, 0, 255).into());
-
-    let state = &mut MainState::new(ctx).unwrap();
-    event::run(ctx, state).unwrap();
 }

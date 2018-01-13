@@ -6,9 +6,7 @@ extern crate rand;
 extern crate specs;
 
 use std::f32::consts::PI;
-
 use std::fmt;
-use std::time::SystemTime;
 
 use ggez::*;
 use ggez::event::{Axis, Button, Keycode, Mod};
@@ -21,8 +19,21 @@ use invaders::components::*;
 use invaders::systems::*;
 use invaders::resources::*;
 
+pub fn main() {
+    let mut c = conf::Conf::new();
+    c.window_setup.title = String::from("Rust Invaders!");
+    c.window_setup.samples = conf::NumSamples::Eight;
+    c.window_setup.resizable = true;
+
+    let ctx = &mut Context::load_from_conf("invaders", "ggez", c).unwrap();
+
+    ctx.print_resource_stats();
+
+    let state = &mut MainState::new(ctx).unwrap();
+    event::run(ctx, state).unwrap();
+}
+
 struct MainState<'a, 'b> {
-    last_time: SystemTime,
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
     paused: bool,
@@ -37,6 +48,9 @@ impl<'a, 'b> fmt::Display for MainState<'a, 'b> {
 
 impl<'a, 'b> MainState<'a, 'b> {
     fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
+        let resolutions = ggez::graphics::get_fullscreen_modes(ctx, 0)?;
+        println!("RESOLUTIONS {:?}", resolutions);
+
         let mut world = World::new();
 
         world.add_resource(DeltaTime(0.016));
@@ -67,56 +81,56 @@ impl<'a, 'b> MainState<'a, 'b> {
             .add(FrictionSystem, "friction", &[])
             .build();
 
-        world
-            .create_entity()
-            .with(Position {
-                x: 400.0,
-                y: 400.0,
-                r: 0.0,
-            })
-            .with(Velocity {
-                x: 0.0,
-                y: 0.0,
-                r: 0.0, // PI / 3.0,
-            })
-            .with(SpeedLimit(800.0))
-            .with(Friction(6000.0))
-            .with(ThrusterSet(hashmap!{
-                "longitudinal" => Thruster {
-                    thrust: 10000.0,
-                    throttle: 0.0,
-                    angle: 0.0,
-                },
-                "lateral" => Thruster {
-                    thrust: 12500.0,
-                    throttle: 0.0,
-                    angle: PI * 0.5,
-                },
-            }))
-            .with(Sprite {
-                offset: Point2::new(0.5, 0.5),
-                mesh: meshes::player(ctx, 1.0 / 50.0),
-                scale: Point2::new(50.0, 50.0),
-            })
-            .with(PlayerControl)
-            .build();
+        spawn_player(ctx, &mut world);
 
         Ok(MainState {
             world,
             dispatcher,
-            last_time: SystemTime::now(),
             paused: false,
         })
     }
 }
 
-impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
-        let now = SystemTime::now();
-        let dt = now.duration_since(self.last_time).unwrap();
-        self.last_time = now;
+fn spawn_player(ctx: &mut Context, world: &mut World) {
+    world
+        .create_entity()
+        .with(Position {
+            x: 400.0,
+            y: 400.0,
+            r: 0.0,
+        })
+        .with(Velocity {
+            x: 0.0,
+            y: 0.0,
+            r: 0.0, // PI / 3.0,
+        })
+        .with(SpeedLimit(800.0))
+        .with(Friction(6000.0))
+        .with(ThrusterSet(hashmap!{
+            "longitudinal" => Thruster {
+                thrust: 10000.0,
+                throttle: 0.0,
+                angle: 0.0,
+            },
+            "lateral" => Thruster {
+                thrust: 12500.0,
+                throttle: 0.0,
+                angle: PI * 0.5,
+            },
+        }))
+        .with(Sprite {
+            offset: Point2::new(0.5, 0.5),
+            mesh: meshes::player(ctx, 1.0 / 50.0),
+            scale: Point2::new(50.0, 50.0),
+        })
+        .with(PlayerControl)
+        .build();
+}
 
+impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
+    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         {
+            let dt = ggez::timer::get_delta(ctx);
             let mut delta = self.world.write_resource::<DeltaTime>();
             *delta = DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
         }
@@ -127,7 +141,10 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+        graphics::set_background_color(ctx, graphics::BLACK);
         graphics::clear(ctx);
+
+        graphics::set_color(ctx, graphics::WHITE)?;
 
         let entities = self.world.entities();
         let positions = self.world.read::<Position>();
@@ -148,6 +165,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         }
 
         graphics::present(ctx);
+
         Ok(())
     }
 
@@ -225,15 +243,4 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             axis, value, instance_id
         );
     }
-}
-
-pub fn main() {
-    let c = conf::Conf::new();
-    let ctx = &mut Context::load_from_conf("invaders", "ggez", c).unwrap();
-
-    ctx.print_resource_stats();
-    graphics::set_background_color(ctx, (0, 0, 0, 255).into());
-
-    let state = &mut MainState::new(ctx).unwrap();
-    event::run(ctx, state).unwrap();
 }
