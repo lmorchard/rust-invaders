@@ -8,6 +8,12 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
+- [ ] Baddies
+
+- [ ] Weapons
+
+- [ ] Playfield bounds
+
 - [ ] Screen scaling
 
 - [ ] Proportional throttle control tied to controller joystick axes
