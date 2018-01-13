@@ -29,8 +29,8 @@ pub fn main() {
 
     ctx.print_resource_stats();
 
-    let projection = graphics::get_projection(ctx);
-    println!("PROJECTION {}", projection);
+    // let projection = graphics::get_projection(ctx);
+    // println!("PROJECTION {}", projection);
 
     let state = &mut MainState::new(ctx).unwrap();
     event::run(ctx, state).unwrap();
@@ -90,7 +90,7 @@ impl<'a, 'b> MainState<'a, 'b> {
             world,
             dispatcher,
             paused: false,
-            zoom: 2.0,
+            zoom: 1.0,
         })
     }
 }
@@ -149,7 +149,10 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         graphics::clear(ctx);
 
         let (width, height) = graphics::get_size(ctx);
-        let (z_width, z_height) = (width as f32 * self.zoom, height as f32 * self.zoom);
+        let (z_width, z_height) = (
+            width as f32 * (1.0 / self.zoom),
+            height as f32 * (1.0 / self.zoom)
+        );
         let new_rect = graphics::Rect::new(
             0.0 - (z_width / 2.0),
             0.0 - (z_height / 2.0),
@@ -194,8 +197,8 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         let new_rect = graphics::Rect::new(
             0.0,
             0.0,
-            width as f32 * self.zoom,
-            height as f32 * self.zoom,
+            width as f32 * (1.0 / self.zoom),
+            height as f32 * (1.0 / self.zoom),
         );
         graphics::set_screen_coordinates(ctx, new_rect).unwrap();
     }
