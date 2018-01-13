@@ -430,6 +430,7 @@ name = "invaders"
 version = "0.1.0"
 dependencies = [
  "ggez 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "maplit 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "specs 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -611,6 +612,11 @@ dependencies = [
 [[package]]
 name = "lzw"
 version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "maplit"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -1250,6 +1256,7 @@ dependencies = [
 "checksum lyon_svg 0.8.6 (registry+https://github.com/rust-lang/crates.io-index)" = "0121480680a6301fb72c124aa5b5bf97dcac53341f95ae7f00ad94b4da615260"
 "checksum lyon_tessellation 0.8.7 (registry+https://github.com/rust-lang/crates.io-index)" = "0222b32fe5b388a83fe4ac1e2e19b2aaa7174cf23ee986cdf9c4c6565787bfd6"
 "checksum lzw 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7d947cbb889ed21c2a84be6ffbaebf5b4e0f4340638cba0444907e38b56be084"
+"checksum maplit 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "08cbb6b4fef96b6d77bfc40ec491b1690c779e77b05cd9f07f787ed376fd4c43"
 "checksum matrixmultiply 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)" = "cac1a66eab356036af85ea093101a14223dc6e3f4c02a59b7d572e5b93270bf7"
 "checksum miniz_oxide 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "19b78d8133f8d31a8ec87d53385a265332c6606cfe2691194f4a3e4c81afb6d1"
 "checksum miniz_oxide_c_api 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "d0fd1bc31b9a0524d867b218e28f4686a6b5bd1d40038dfd20bd4445b48aaf25"

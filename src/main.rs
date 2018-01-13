@@ -1,5 +1,7 @@
 extern crate ggez;
 extern crate invaders;
+#[macro_use]
+extern crate maplit;
 extern crate rand;
 extern crate specs;
 
@@ -50,13 +52,17 @@ impl<'a, 'b> MainState<'a, 'b> {
         world.register::<Position>();
         world.register::<Velocity>();
         world.register::<Thruster>();
+        world.register::<ThrusterSet>();
         world.register::<Friction>();
         world.register::<SpeedLimit>();
+        world.register::<PlayerControl>();
         world.register::<Sprite>();
 
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
             .add(ThrusterSystem, "thruster", &[])
+            .add(ThrusterSetSystem, "thruster_set", &[])
+            .add(PlayerControlSystem, "player_control", &[])
             .add(SpeedLimitSystem, "speed_limit", &[])
             .add(FrictionSystem, "friction", &[])
             .build();
@@ -73,18 +79,26 @@ impl<'a, 'b> MainState<'a, 'b> {
                 y: 0.0,
                 r: 0.0, // PI / 3.0,
             })
-            .with(Thruster {
-                thrust: 25.0,
-                throttle: 1.0,
-                angle: PI * 0.5, // 0.0,
-            })
-            .with(SpeedLimit { max_speed: 100.0 })
-            .with(Friction { braking: 5.0 })
+            .with(SpeedLimit(800.0))
+            .with(Friction(6000.0))
+            .with(ThrusterSet(hashmap!{
+                "longitudinal" => Thruster {
+                    thrust: 10000.0,
+                    throttle: 0.0,
+                    angle: 0.0,
+                },
+                "lateral" => Thruster {
+                    thrust: 12500.0,
+                    throttle: 0.0,
+                    angle: PI * 0.5,
+                },
+            }))
             .with(Sprite {
-                mesh: meshes::player(ctx, 0.01),
                 offset: Point2::new(0.5, 0.5),
-                scale: Point2::new(100.0, 100.0),
+                mesh: meshes::player(ctx, 1.0 / 50.0),
+                scale: Point2::new(50.0, 50.0),
             })
+            .with(PlayerControl)
             .build();
 
         Ok(MainState {

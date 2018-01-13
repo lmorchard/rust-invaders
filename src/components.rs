@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use ggez::graphics::{Mesh, Point2};
 
 #[derive(Component, Debug)]
@@ -22,17 +24,16 @@ pub struct Thruster {
 }
 
 #[derive(Component, Debug)]
-pub struct Friction {
-    pub braking: f32,
-}
+pub struct ThrusterSet(pub HashMap<&'static str, Thruster>);
 
 #[derive(Component, Debug)]
-pub struct SpeedLimit {
-    pub max_speed: f32,
-}
+pub struct Friction(pub f32);
 
 #[derive(Component, Debug)]
-pub struct PlayerControlledThruster;
+pub struct SpeedLimit(pub f32);
+
+#[derive(Component, Debug)]
+pub struct PlayerControl;
 
 #[derive(Component, Debug)]
 pub struct Sprite {
