@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ggez::graphics::{Mesh, Point2};
+use ggez::graphics::{Mesh, Point2, Rect};
 
 #[derive(Component, Debug)]
 pub struct Position {
@@ -8,6 +8,9 @@ pub struct Position {
     pub y: f32,
     pub r: f32,
 }
+
+#[derive(Component, Debug)]
+pub struct PositionBounds(pub Rect);
 
 #[derive(Component, Debug)]
 pub struct Velocity {

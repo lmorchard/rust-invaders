@@ -33,6 +33,32 @@ impl<'a> System<'a> for MotionSystem {
     }
 }
 
+pub struct PositionBoundsSystem;
+
+impl<'a> System<'a> for PositionBoundsSystem {
+    type SystemData = (
+        ReadStorage<'a, PositionBounds>,
+        WriteStorage<'a, Position>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (bounds, mut pos) = data;
+        for (bounds, pos) in (&bounds, &mut pos).join() {
+            let bounds = bounds.0;
+            if pos.x < bounds.x {
+                pos.x = bounds.x;
+            } else if pos.x > bounds.x + bounds.w {
+                pos.x = bounds.x + bounds.w;
+            }
+            if pos.y < bounds.y {
+                pos.y = bounds.y;
+            } else if pos.y > bounds.y + bounds.h {
+                pos.y = bounds.y + bounds.h;
+            }
+        }
+    }
+}
+
 fn apply_thrust(delta: f32, thruster: &Thruster, position: &Position, velocity: &mut Velocity) {
     let m_inertia = (velocity.x * velocity.x + velocity.y * velocity.y).sqrt();
     if m_inertia == 0.0 && thruster.throttle == 0.0 {

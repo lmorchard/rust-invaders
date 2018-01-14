@@ -10,7 +10,7 @@ use std::fmt;
 
 use ggez::*;
 use ggez::event::{Axis, Button, Keycode, Mod};
-use ggez::graphics::{DrawParam, Point2};
+use ggez::graphics::{DrawParam, DrawMode, Point2, Rect};
 
 use specs::{Dispatcher, DispatcherBuilder, Join, World};
 
@@ -18,6 +18,10 @@ use invaders::graphics::meshes;
 use invaders::components::*;
 use invaders::systems::*;
 use invaders::resources::*;
+
+const PLAYFIELD_WIDTH: f32 = 1600.0;
+const PLAYFIELD_HEIGHT: f32 = 900.0;
+const PLAYFIELD_RATIO: f32 = PLAYFIELD_WIDTH / PLAYFIELD_HEIGHT;
 
 pub fn main() {
     let mut c = conf::Conf::new();
@@ -33,6 +37,9 @@ pub fn main() {
     // println!("PROJECTION {}", projection);
 
     let state = &mut MainState::new(ctx).unwrap();
+    let (width, height) = graphics::get_size(ctx);
+    state.update_screen_coordinates(ctx, width, height);
+
     event::run(ctx, state).unwrap();
 }
 
@@ -67,6 +74,7 @@ impl<'a, 'b> MainState<'a, 'b> {
         });
 
         world.register::<Position>();
+        world.register::<PositionBounds>();
         world.register::<Velocity>();
         world.register::<Thruster>();
         world.register::<ThrusterSet>();
@@ -77,6 +85,7 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
+            .add(PositionBoundsSystem, "position_bounds", &[])
             .add(ThrusterSystem, "thruster", &[])
             .add(ThrusterSetSystem, "thruster_set", &[])
             .add(PlayerControlSystem, "player_control", &[])
@@ -93,42 +102,40 @@ impl<'a, 'b> MainState<'a, 'b> {
             zoom: 1.0,
         })
     }
-}
 
-fn spawn_player(ctx: &mut Context, world: &mut World) {
-    world
-        .create_entity()
-        .with(Position {
-            x: 0.0,
-            y: 0.0,
-            r: 0.0,
-        })
-        .with(Velocity {
-            x: 0.0,
-            y: 0.0,
-            r: 0.0, // PI / 3.0,
-        })
-        .with(SpeedLimit(800.0))
-        .with(Friction(6000.0))
-        .with(ThrusterSet(hashmap!{
-            "longitudinal" => Thruster {
-                thrust: 10000.0,
-                throttle: 0.0,
-                angle: 0.0,
-            },
-            "lateral" => Thruster {
-                thrust: 12500.0,
-                throttle: 0.0,
-                angle: PI * 0.5,
-            },
-        }))
-        .with(Sprite {
-            offset: Point2::new(0.5, 0.5),
-            mesh: meshes::player(ctx, 1.0 / 50.0),
-            scale: Point2::new(50.0, 50.0),
-        })
-        .with(PlayerControl)
-        .build();
+    fn update_screen_coordinates(&mut self, ctx: &mut Context, width: u32, height: u32) {
+        let width = width as f32;
+        let height = height as f32;
+
+        let screen_ratio = width / height;
+        let fit_ratio = if screen_ratio < PLAYFIELD_RATIO {
+            PLAYFIELD_WIDTH / width
+        } else {
+            PLAYFIELD_HEIGHT / height
+        };
+
+        let (visible_width, visible_height) = (
+            width as f32 * fit_ratio * (1.0 / self.zoom),
+            height as f32 * fit_ratio * (1.0 / self.zoom),
+        );
+        let (visible_x, visible_y) = (
+            0.0 - (visible_width / 2.0),
+            0.0 - (visible_height / 2.0),
+        );
+
+        // Hacky screen shake (for future reference):
+        // let mut coords = graphics::get_screen_coordinates(ctx);
+        // coords.x = 10.0 * rand::random::<f32>();
+        // coords.y = 10.0 * rand::random::<f32>();
+        // graphics::set_screen_coordinates(ctx, coords).unwrap();
+
+        graphics::set_screen_coordinates(ctx, Rect::new(
+            visible_x,
+            visible_y,
+            visible_width,
+            visible_height,
+        )).unwrap();
+    }
 }
 
 impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
@@ -138,9 +145,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             let mut delta = self.world.write_resource::<DeltaTime>();
             *delta = DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
         }
-
         self.dispatcher.dispatch(&mut self.world.res);
-
         Ok(())
     }
 
@@ -148,26 +153,14 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         graphics::set_background_color(ctx, graphics::BLACK);
         graphics::clear(ctx);
 
-        let (width, height) = graphics::get_size(ctx);
-        let (z_width, z_height) = (
-            width as f32 * (1.0 / self.zoom),
-            height as f32 * (1.0 / self.zoom)
-        );
-        let new_rect = graphics::Rect::new(
-            0.0 - (z_width / 2.0),
-            0.0 - (z_height / 2.0),
-            z_width,
-            z_height,
-        );
-        graphics::set_screen_coordinates(ctx, new_rect).unwrap();
-
-        // Hacky screen shake:
-        // let mut coords = graphics::get_screen_coordinates(ctx);
-        // coords.x = 10.0 * rand::random::<f32>();
-        // coords.y = 10.0 * rand::random::<f32>();
-        // graphics::set_screen_coordinates(ctx, coords).unwrap();
-
         graphics::set_color(ctx, graphics::WHITE)?;
+
+        graphics::rectangle(ctx, DrawMode::Line(1.0), Rect::new(
+            0.0 - (PLAYFIELD_WIDTH / 2.0),
+            0.0 - (PLAYFIELD_HEIGHT / 2.0),
+            PLAYFIELD_WIDTH,
+            PLAYFIELD_HEIGHT,
+        )).unwrap();
 
         let entities = self.world.entities();
         let positions = self.world.read::<Position>();
@@ -194,13 +187,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
 
     fn resize_event(&mut self, ctx: &mut Context, width: u32, height: u32) {
         println!("Resized screen to {}, {}", width, height);
-        let new_rect = graphics::Rect::new(
-            0.0,
-            0.0,
-            width as f32 * (1.0 / self.zoom),
-            height as f32 * (1.0 / self.zoom),
-        );
-        graphics::set_screen_coordinates(ctx, new_rect).unwrap();
+        self.update_screen_coordinates(ctx, width, height);
     }
 
     fn focus_event(&mut self, _ctx: &mut Context, gained: bool) {
@@ -277,4 +264,46 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             axis, value, instance_id
         );
     }
+}
+
+fn spawn_player(ctx: &mut Context, world: &mut World) {
+    world
+        .create_entity()
+        .with(Position {
+            x: 0.0,
+            y: (PLAYFIELD_HEIGHT / 2.0) - 100.0,
+            r: 0.0,
+        })
+        .with(PositionBounds(Rect::new(
+            0.0 - PLAYFIELD_WIDTH / 2.0 + 50.0,
+            0.0 - PLAYFIELD_HEIGHT / 2.0 + 50.0,
+            PLAYFIELD_WIDTH - 100.0,
+            PLAYFIELD_HEIGHT - 100.0,
+        )))
+        .with(Velocity {
+            x: 0.0,
+            y: 0.0,
+            r: 0.0,
+        })
+        .with(SpeedLimit(800.0))
+        .with(Friction(6000.0))
+        .with(ThrusterSet(hashmap!{
+            "longitudinal" => Thruster {
+                thrust: 10000.0,
+                throttle: 0.0,
+                angle: 0.0,
+            },
+            "lateral" => Thruster {
+                thrust: 12500.0,
+                throttle: 0.0,
+                angle: PI * 0.5,
+            },
+        }))
+        .with(Sprite {
+            offset: Point2::new(0.5, 0.5),
+            mesh: meshes::player(ctx, 1.0 / 50.0),
+            scale: Point2::new(50.0, 50.0),
+        })
+        .with(PlayerControl)
+        .build();
 }
