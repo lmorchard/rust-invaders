@@ -14,6 +14,8 @@ You know what? I just don't really know, but it'll be a mess.
 
 - [ ] Components should have ::new() constructors? Or implement Default trait
 
+- [ ] Switch ThrusterSet from string indexing to enum indexing?
+
 - [ ] Weapons
 
 - [ ] Baddies

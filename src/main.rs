@@ -281,9 +281,8 @@ fn spawn_player(world: &mut World) {
     world
         .create_entity()
         .with(Position {
-            x: 0.0,
             y: (PLAYFIELD_HEIGHT / 2.0) - 100.0,
-            r: 0.0,
+            ..Default::default()
         })
         .with(PositionBounds(Rect::new(
             0.0 - PLAYFIELD_WIDTH / 2.0 + 25.0,
@@ -291,11 +290,7 @@ fn spawn_player(world: &mut World) {
             PLAYFIELD_WIDTH - 50.0,
             PLAYFIELD_HEIGHT - 50.0,
         )))
-        .with(Velocity {
-            x: 0.0,
-            y: 0.0,
-            r: 0.0,
-        })
+        .with(Velocity { ..Default::default() })
         .with(SpeedLimit(800.0))
         .with(Friction(6000.0))
         .with(ThrusterSet(hashmap!{
@@ -312,8 +307,7 @@ fn spawn_player(world: &mut World) {
         }))
         .with(Gun {
             period: 0.25,
-            cooldown: 0.0,
-            firing: true,
+            ..Default::default()
         })
         .with(Collidable { size: 50.0 })
         .with(Sprite {
@@ -332,12 +326,11 @@ fn spawn_asteroid(world: &mut World) {
         .with(Position {
             x: (PLAYFIELD_WIDTH / 2.0) - PLAYFIELD_WIDTH * rand::random::<f32>(),
             y: 200.0 - 600.0 * rand::random::<f32>(),
-            r: 0.0,
+            ..Default::default()
         })
         .with(Velocity {
-            x: 0.0,
-            y: 0.0,
             r: PI * rand::random::<f32>(),
+            ..Default::default()
         })
         .with(Collidable { size: size })
         .with(Sprite {

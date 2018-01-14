@@ -10,6 +10,15 @@ pub struct Position {
     pub y: f32,
     pub r: f32,
 }
+impl Default for Position {
+    fn default() -> Position {
+        Position {
+            x: 0.0,
+            y: 0.0,
+            r: 0.0,
+        }
+    }
+}
 
 #[derive(Component, Debug)]
 pub struct PositionBounds(pub Rect);
@@ -22,6 +31,22 @@ pub struct Velocity {
     pub x: f32,
     pub y: f32,
     pub r: f32,
+}
+impl Velocity {
+    pub fn new() -> Velocity {
+        Velocity {
+            ..Default::default()
+        }
+    }
+}
+impl Default for Velocity {
+    fn default() -> Velocity {
+        Velocity {
+            x: 0.0,
+            y: 0.0,
+            r: 0.0,
+        }
+    }
 }
 
 #[derive(Component, Debug)]
@@ -50,7 +75,6 @@ pub struct Sprite {
     pub mesh_selection: MeshSelection,
     pub mesh: Option<Mesh>,
 }
-
 impl Default for Sprite {
     fn default() -> Sprite {
         Sprite {
@@ -72,4 +96,13 @@ pub struct Gun {
     pub firing: bool,
     pub period: f32,
     pub cooldown: f32,
+}
+impl Default for Gun {
+    fn default() -> Gun {
+        Gun {
+            firing: false,
+            period: 1.0,
+            cooldown: 0.0,
+        }
+    }
 }

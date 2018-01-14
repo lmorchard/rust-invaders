@@ -289,7 +289,7 @@ impl<'a> System<'a> for GunSystem {
                 Position {
                     x: position.x,
                     y: position.y - 50.0,
-                    r: 0.0,
+                    ..Default::default()
                 },
             );
             lazy.insert(
@@ -299,9 +299,8 @@ impl<'a> System<'a> for GunSystem {
             lazy.insert(
                 bullet,
                 Velocity {
-                    x: 0.0,
                     y: -800.0,
-                    r: 0.0,
+                    ..Default::default()
                 },
             );
             lazy.insert(bullet, Collidable { size: 50.0 });
