@@ -12,6 +12,8 @@ You know what? I just don't really know, but it'll be a mess.
 
 - [ ] Damage on collision from bullets, to destroy asteroids and baddies
 
+- [ ] Components should have ::new() constructors? Or implement Default trait
+
 - [ ] Weapons
 
 - [ ] Baddies

@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use ggez::graphics::{Point2, Rect};
+use ggez::graphics::{Mesh, Point2, Rect};
+
+use graphics::meshes::MeshSelection;
 
 #[derive(Component, Debug)]
 pub struct Position {
@@ -45,7 +47,19 @@ pub struct PlayerControl;
 pub struct Sprite {
     pub scale: Point2,
     pub offset: Point2,
-    pub mesh: &'static str,
+    pub mesh_selection: MeshSelection,
+    pub mesh: Option<Mesh>,
+}
+
+impl Default for Sprite {
+    fn default() -> Sprite {
+        Sprite {
+            scale: Point2::new(100.0, 100.0),
+            offset: Point2::new(0.5, 0.5),
+            mesh_selection: MeshSelection::Test,
+            mesh: None,
+        }
+    }
 }
 
 #[derive(Component, Debug)]

@@ -14,7 +14,7 @@ use ggez::graphics::{DrawMode, DrawParam, Point2, Rect};
 
 use specs::{Dispatcher, DispatcherBuilder, Join, World};
 
-use invaders::graphics::meshes;
+use invaders::graphics::meshes::{build_mesh, MeshSelection};
 use invaders::components::*;
 use invaders::systems::*;
 use invaders::resources::*;
@@ -165,15 +165,17 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
 
         let entities = self.world.entities();
         let positions = self.world.read::<Position>();
-        let sprites = self.world.read::<Sprite>();
+        let mut sprites = self.world.write::<Sprite>();
 
-        let by_name = meshes::build_meshes();
-
-        for (_ent, pos, spr) in (&*entities, &positions, &sprites).join() {
-            let mesh = by_name.get(&spr.mesh).unwrap()(ctx, 1.0 / spr.scale.x);
+        // TODO: cache these per-sprite component! stateful asteroids
+        for (_ent, pos, spr) in (&*entities, &positions, &mut sprites).join() {
+            let selection = &spr.mesh_selection;
+            let line_width = 1.0 / spr.scale.x;
+            let mesh = &spr.mesh
+                .get_or_insert_with(|| build_mesh(selection, ctx, line_width));
             graphics::draw_ex(
                 ctx,
-                &mesh,
+                *mesh,
                 DrawParam {
                     dest: Point2::new(pos.x, pos.y),
                     rotation: pos.r,
@@ -196,7 +198,6 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     }
 
     fn resize_event(&mut self, ctx: &mut Context, width: u32, height: u32) {
-        println!("Resized screen to {}, {}", width, height);
         self.update_screen_coordinates(ctx, width, height);
     }
 
@@ -310,15 +311,15 @@ fn spawn_player(world: &mut World) {
             },
         }))
         .with(Gun {
-            period: 0.5,
+            period: 0.25,
             cooldown: 0.0,
             firing: true,
         })
         .with(Collidable { size: 50.0 })
         .with(Sprite {
-            offset: Point2::new(0.5, 0.5),
-            mesh: "player",
+            mesh_selection: MeshSelection::Player,
             scale: Point2::new(50.0, 50.0),
+            ..Default::default()
         })
         .with(PlayerControl)
         .build();
@@ -340,9 +341,9 @@ fn spawn_asteroid(world: &mut World) {
         })
         .with(Collidable { size: size })
         .with(Sprite {
-            offset: Point2::new(0.5, 0.5),
-            mesh: "asteroid",
+            mesh_selection: MeshSelection::Asteroid,
             scale: Point2::new(size, size),
+            ..Default::default()
         })
         .build();
 }

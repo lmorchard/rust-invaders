@@ -4,6 +4,7 @@ use specs::{Entities, Fetch, FetchMut, Join, LazyUpdate, ReadStorage, System, Wr
 
 use ggez::graphics::{Point2, Rect, Vector2};
 
+use graphics::meshes::MeshSelection;
 use resources::*;
 use components::*;
 
@@ -251,6 +252,9 @@ impl<'a> System<'a> for CollisionSystem {
                 }
             }
         }
+        //if !collisions.is_empty() {
+        //    println!("COLLISIONS {:?}", collisions.0);
+        //}
     }
 }
 
@@ -304,9 +308,9 @@ impl<'a> System<'a> for GunSystem {
             lazy.insert(
                 bullet,
                 Sprite {
-                    offset: Point2::new(0.5, 0.5),
-                    mesh: "simple_bullet",
+                    mesh_selection: MeshSelection::SimpleBullet,
                     scale: Point2::new(50.0, 50.0),
+                    ..Default::default()
                 },
             );
         }

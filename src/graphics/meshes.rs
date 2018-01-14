@@ -1,12 +1,34 @@
 extern crate rand;
 
 use std::f32::consts::PI;
-use std::collections::HashMap;
 
 use ggez::*;
 use ggez::graphics::{DrawMode, Mesh, MeshBuilder, Point2};
 
 use rand::Rng;
+
+#[derive(Debug)]
+pub enum MeshSelection {
+    Test,
+    Player,
+    Asteroid,
+    SimpleBullet,
+}
+
+impl Default for MeshSelection {
+    fn default() -> MeshSelection {
+        MeshSelection::Test
+    }
+}
+
+pub fn build_mesh(selection: &MeshSelection, ctx: &mut Context, line_width: f32) -> Mesh {
+    match selection {
+        &MeshSelection::Player => player(ctx, line_width),
+        &MeshSelection::Asteroid => asteroid(ctx, line_width),
+        &MeshSelection::SimpleBullet => simple_bullet(ctx, line_width),
+        _ => test(ctx, line_width),
+    }
+}
 
 // TODO: Figure out if there's a better way to write this macro
 macro_rules! points {
@@ -17,23 +39,6 @@ macro_rules! points {
             temp_vec
         }
     };
-}
-
-type MeshCallback<'a> = Box<(Fn(&mut Context, f32) -> Mesh + 'static)>;
-fn mk_mesh_callback<'a, F>(f: F) -> MeshCallback<'a>
-where
-    F: Fn(&mut Context, f32) -> Mesh + 'static,
-{
-    Box::new(f) as MeshCallback
-}
-
-pub fn build_meshes<'a>() -> HashMap<&'static str, MeshCallback<'a>> {
-    hashmap!{
-        "test" => mk_mesh_callback(test),
-        "player" => mk_mesh_callback(player),
-        "asteroid" => mk_mesh_callback(asteroid),
-        "simple_bullet" => mk_mesh_callback(simple_bullet),
-    }
 }
 
 pub fn test(ctx: &mut Context, line_width: f32) -> Mesh {

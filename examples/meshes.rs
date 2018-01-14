@@ -1,17 +1,21 @@
 extern crate ggez;
 extern crate invaders;
 
+// TODO
+//
+// - Copy over scaling logic from main.rs
+// - reflow wrapping sprites based on screen dimensions
+
 use ggez::*;
 use ggez::graphics::{DrawParam, Mesh, Point2};
 
 use std::f32;
 use std::f32::consts::PI;
 
-use invaders::graphics::meshes;
+use invaders::graphics::meshes::{build_mesh, MeshSelection};
 
 const SPACING: f32 = 150.0;
 const ROTATION_SPEED: f32 = PI / 150.0;
-const LINE_WIDTH: f32 = 0.01;
 
 pub fn main() {
     let mut c = conf::Conf::new();
@@ -21,31 +25,37 @@ pub fn main() {
 
     let ctx = &mut Context::load_from_conf("example_meshes", "ggez", c).unwrap();
 
-    ctx.print_resource_stats();
     graphics::set_background_color(ctx, (0, 0, 0, 255).into());
 
-    let state = &mut MainState::new(ctx).unwrap();
+    let state = &mut MainState::new().unwrap();
     event::run(ctx, state).unwrap();
 }
 
 struct MainState {
     rotation: f32,
-    meshes: Vec<Mesh>,
+    mesh_selections: Vec<MeshSelection>,
+    meshes: Vec<Option<Mesh>>,
 }
 
 impl MainState {
-    fn new(ctx: &mut Context) -> GameResult<MainState> {
-        let by_name = meshes::build_meshes();
-        let meshes = vec![
-            by_name.get("test").unwrap()(ctx, LINE_WIDTH),
-            by_name.get("player").unwrap()(ctx, LINE_WIDTH),
-            by_name.get("simple_bullet").unwrap()(ctx, LINE_WIDTH),
-            by_name.get("asteroid").unwrap()(ctx, LINE_WIDTH),
-            by_name.get("asteroid").unwrap()(ctx, LINE_WIDTH),
-            by_name.get("asteroid").unwrap()(ctx, LINE_WIDTH),
+    fn new() -> GameResult<MainState> {
+        let mesh_selections = vec![
+            MeshSelection::Test,
+            MeshSelection::Player,
+            MeshSelection::SimpleBullet,
+            MeshSelection::Asteroid,
+            MeshSelection::Asteroid,
+            MeshSelection::Asteroid,
+            MeshSelection::Asteroid,
+            MeshSelection::Asteroid,
         ];
+        let mut meshes = Vec::new();
+        for _idx in 0..mesh_selections.len() {
+            meshes.push(None);
+        }
         Ok(MainState {
             rotation: 0.0,
+            mesh_selections,
             meshes,
         })
     }
@@ -63,7 +73,10 @@ impl event::EventHandler for MainState {
         let mut pos_x = 75.0;
         let mut pos_y = 75.0;
 
-        for ref mesh in &self.meshes {
+        for idx in 0..self.meshes.len() {
+            let selection = &self.mesh_selections[idx];
+            let mesh =
+                &self.meshes[idx].get_or_insert_with(|| build_mesh(selection, ctx, 1.0 / 100.0));
             graphics::draw_ex(
                 ctx,
                 *mesh,

@@ -1,6 +1,4 @@
 extern crate ggez;
-#[macro_use]
-extern crate maplit;
 extern crate rand;
 extern crate specs;
 #[macro_use]
