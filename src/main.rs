@@ -68,6 +68,7 @@ impl<'a, 'b> MainState<'a, 'b> {
             fire: false,
             special: false,
         });
+        world.add_resource(Collisions::new());
 
         world.register::<Position>();
         world.register::<PositionBounds>();
@@ -78,6 +79,7 @@ impl<'a, 'b> MainState<'a, 'b> {
         world.register::<SpeedLimit>();
         world.register::<PlayerControl>();
         world.register::<Sprite>();
+        world.register::<Collidable>();
 
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
@@ -87,9 +89,14 @@ impl<'a, 'b> MainState<'a, 'b> {
             .add(PlayerControlSystem, "player_control", &[])
             .add(SpeedLimitSystem, "speed_limit", &[])
             .add(FrictionSystem, "friction", &[])
+            .add(CollisionSystem, "collision", &[])
             .build();
 
         spawn_player(ctx, &mut world);
+
+        for _idx in 0..20 {
+            spawn_asteroid(ctx, &mut world);
+        }
 
         Ok(MainState {
             world,
@@ -131,6 +138,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             *delta = DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
         }
         self.dispatcher.dispatch(&mut self.world.res);
+        self.world.maintain();
         Ok(())
     }
 
@@ -144,10 +152,10 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             ctx,
             DrawMode::Line(1.0),
             Rect::new(
-                0.0 - (PLAYFIELD_WIDTH / 2.0),
-                0.0 - (PLAYFIELD_HEIGHT / 2.0),
-                PLAYFIELD_WIDTH,
-                PLAYFIELD_HEIGHT,
+                0.0 - (PLAYFIELD_WIDTH / 2.0) - 1.0,
+                0.0 - (PLAYFIELD_HEIGHT / 2.0) - 1.0,
+                PLAYFIELD_WIDTH + 2.0,
+                PLAYFIELD_HEIGHT + 2.0,
             ),
         ).unwrap();
 
@@ -270,10 +278,10 @@ fn spawn_player(ctx: &mut Context, world: &mut World) {
             r: 0.0,
         })
         .with(PositionBounds(Rect::new(
-            0.0 - PLAYFIELD_WIDTH / 2.0 + 50.0,
-            0.0 - PLAYFIELD_HEIGHT / 2.0 + 50.0,
-            PLAYFIELD_WIDTH - 100.0,
-            PLAYFIELD_HEIGHT - 100.0,
+            0.0 - PLAYFIELD_WIDTH / 2.0 + 25.0,
+            0.0 - PLAYFIELD_HEIGHT / 2.0 + 25.0,
+            PLAYFIELD_WIDTH - 50.0,
+            PLAYFIELD_HEIGHT - 50.0,
         )))
         .with(Velocity {
             x: 0.0,
@@ -294,11 +302,35 @@ fn spawn_player(ctx: &mut Context, world: &mut World) {
                 angle: PI * 0.5,
             },
         }))
+        .with(Collidable { size: 50.0 })
         .with(Sprite {
             offset: Point2::new(0.5, 0.5),
             mesh: meshes::player(ctx, 1.0 / 50.0),
             scale: Point2::new(50.0, 50.0),
         })
         .with(PlayerControl)
+        .build();
+}
+
+fn spawn_asteroid(ctx: &mut Context, world: &mut World) {
+    let size = 25.0 + 150.0 * rand::random::<f32>();
+    world
+        .create_entity()
+        .with(Position {
+            x: (PLAYFIELD_WIDTH / 2.0) - PLAYFIELD_WIDTH * rand::random::<f32>(),
+            y: 200.0 - 600.0 * rand::random::<f32>(),
+            r: 0.0,
+        })
+        .with(Velocity {
+            x: 0.0,
+            y: 0.0,
+            r: PI * rand::random::<f32>(),
+        })
+        .with(Collidable { size: size })
+        .with(Sprite {
+            offset: Point2::new(0.5, 0.5),
+            mesh: meshes::asteroid(ctx, 1.0 / size),
+            scale: Point2::new(size, size),
+        })
         .build();
 }

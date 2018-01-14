@@ -21,3 +21,5 @@ You know what? I just don't really know, but it'll be a mess.
 - [ ] Pause menu
 
 - [ ] Settings menu - resolution, keybindings, etc
+
+- [ ] Index Position components in a quadtree for collision queries & etc

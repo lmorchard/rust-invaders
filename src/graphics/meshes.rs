@@ -60,6 +60,22 @@ pub fn player(ctx: &mut Context, line_width: f32) -> Mesh {
         .unwrap()
 }
 
+pub fn simple_bullet(ctx: &mut Context, line_width: f32) -> Mesh {
+    MeshBuilder::new()
+        .polygon(
+            DrawMode::Line(line_width),
+            &points![
+                (0.5, 0.0),
+                (0.6, 0.25),
+                (0.5, 1.0),
+                (0.4, 0.25),
+                (0.5, 0.0)
+            ],
+        )
+        .build(ctx)
+        .unwrap()
+}
+
 pub fn asteroid(ctx: &mut Context, line_width: f32) -> Mesh {
     let mut num_points = 7.0 + rand::thread_rng().gen_range(0.0, 12.0);
     let max_radius = 0.5;

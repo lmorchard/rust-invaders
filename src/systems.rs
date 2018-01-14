@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use specs::{Fetch, Join, ReadStorage, System, WriteStorage};
+use specs::{Entities, Fetch, FetchMut, Join, ReadStorage, System, WriteStorage};
 
 use ggez::graphics::Vector2;
 
@@ -191,6 +191,37 @@ impl<'a> System<'a> for PlayerControlSystem {
                     -1.0
                 } else {
                     0.0
+                }
+            }
+        }
+    }
+}
+
+pub struct CollisionSystem;
+
+impl<'a> System<'a> for CollisionSystem {
+    type SystemData = (
+        Entities<'a>,
+        FetchMut<'a, Collisions>,
+        ReadStorage<'a, Position>,
+        ReadStorage<'a, Collidable>,
+    );
+
+    fn run(&mut self, (entities, mut collisions, positions, collidables): Self::SystemData) {
+        collisions.clear();
+        // TODO: Replace this compare of all-to-all with a quadtree search
+        for (entity, pos, col) in (&*entities, &positions, &collidables).join() {
+            for (other_entity, other_pos, other_col) in
+                (&*entities, &positions, &collidables).join()
+            {
+                if entity == other_entity {
+                    continue;
+                }
+                // Simple circular overlap "hitbox" - TODO: implement more complex logic
+                let overlap_range = ((col.size / 2.0) + (other_col.size / 2.0)).powf(2.0);
+                let distance_sq = (other_pos.x - pos.x).powf(2.0) + (other_pos.y - pos.y).powf(2.0);
+                if distance_sq <= overlap_range {
+                    collisions.insert(entity, other_entity);
                 }
             }
         }

@@ -38,7 +38,7 @@ impl MainState {
         let meshes = vec![
             meshes::test(ctx, LINE_WIDTH),
             meshes::player(ctx, LINE_WIDTH),
-            meshes::asteroid(ctx, LINE_WIDTH),
+            meshes::simple_bullet(ctx, LINE_WIDTH),
             meshes::asteroid(ctx, LINE_WIDTH),
             meshes::asteroid(ctx, LINE_WIDTH),
             meshes::asteroid(ctx, LINE_WIDTH),

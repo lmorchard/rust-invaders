@@ -44,3 +44,8 @@ pub struct Sprite {
     pub offset: Point2,
     pub mesh: Mesh,
 }
+
+#[derive(Component, Debug)]
+pub struct Collidable {
+    pub size: f32,
+}
