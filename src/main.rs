@@ -10,7 +10,7 @@ use std::fmt;
 
 use ggez::*;
 use ggez::event::{Axis, Button, Keycode, Mod};
-use ggez::graphics::{DrawParam, DrawMode, Point2, Rect};
+use ggez::graphics::{DrawMode, DrawParam, Point2, Rect};
 
 use specs::{Dispatcher, DispatcherBuilder, Join, World};
 
@@ -26,15 +26,12 @@ const PLAYFIELD_RATIO: f32 = PLAYFIELD_WIDTH / PLAYFIELD_HEIGHT;
 pub fn main() {
     let mut c = conf::Conf::new();
     c.window_setup.title = String::from("Rust Invaders!");
-    c.window_setup.samples = conf::NumSamples::Eight;
+    c.window_setup.samples = conf::NumSamples::Four;
     c.window_setup.resizable = true;
 
     let ctx = &mut Context::load_from_conf("invaders", "ggez", c).unwrap();
 
     ctx.print_resource_stats();
-
-    // let projection = graphics::get_projection(ctx);
-    // println!("PROJECTION {}", projection);
 
     let state = &mut MainState::new(ctx).unwrap();
     let (width, height) = graphics::get_size(ctx);
@@ -46,6 +43,7 @@ pub fn main() {
 struct MainState<'a, 'b> {
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
+    coords: Rect,
     paused: bool,
     zoom: f32,
 }
@@ -59,8 +57,6 @@ impl<'a, 'b> fmt::Display for MainState<'a, 'b> {
 
 impl<'a, 'b> MainState<'a, 'b> {
     fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
-        // let resolutions = ggez::graphics::get_fullscreen_modes(ctx, 0)?;
-
         let mut world = World::new();
 
         world.add_resource(DeltaTime(0.016));
@@ -100,6 +96,7 @@ impl<'a, 'b> MainState<'a, 'b> {
             dispatcher,
             paused: false,
             zoom: 1.0,
+            coords: Rect::new(0.0, 0.0, PLAYFIELD_WIDTH, PLAYFIELD_HEIGHT),
         })
     }
 
@@ -118,23 +115,11 @@ impl<'a, 'b> MainState<'a, 'b> {
             width as f32 * fit_ratio * (1.0 / self.zoom),
             height as f32 * fit_ratio * (1.0 / self.zoom),
         );
-        let (visible_x, visible_y) = (
-            0.0 - (visible_width / 2.0),
-            0.0 - (visible_height / 2.0),
-        );
+        let (visible_x, visible_y) = (0.0 - (visible_width / 2.0), 0.0 - (visible_height / 2.0));
 
-        // Hacky screen shake (for future reference):
-        // let mut coords = graphics::get_screen_coordinates(ctx);
-        // coords.x = 10.0 * rand::random::<f32>();
-        // coords.y = 10.0 * rand::random::<f32>();
-        // graphics::set_screen_coordinates(ctx, coords).unwrap();
+        self.coords = Rect::new(visible_x, visible_y, visible_width, visible_height);
 
-        graphics::set_screen_coordinates(ctx, Rect::new(
-            visible_x,
-            visible_y,
-            visible_width,
-            visible_height,
-        )).unwrap();
+        graphics::set_screen_coordinates(ctx, self.coords.clone()).unwrap();
     }
 }
 
@@ -155,12 +140,16 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
 
         graphics::set_color(ctx, graphics::WHITE)?;
 
-        graphics::rectangle(ctx, DrawMode::Line(1.0), Rect::new(
-            0.0 - (PLAYFIELD_WIDTH / 2.0),
-            0.0 - (PLAYFIELD_HEIGHT / 2.0),
-            PLAYFIELD_WIDTH,
-            PLAYFIELD_HEIGHT,
-        )).unwrap();
+        graphics::rectangle(
+            ctx,
+            DrawMode::Line(1.0),
+            Rect::new(
+                0.0 - (PLAYFIELD_WIDTH / 2.0),
+                0.0 - (PLAYFIELD_HEIGHT / 2.0),
+                PLAYFIELD_WIDTH,
+                PLAYFIELD_HEIGHT,
+            ),
+        ).unwrap();
 
         let entities = self.world.entities();
         let positions = self.world.read::<Position>();
@@ -179,6 +168,12 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
                 },
             )?;
         }
+
+        // Hacky screen shake (for future reference):
+        //let mut coords = graphics::get_screen_coordinates(ctx);
+        //coords.x = self.coords.x + (5.0 - 10.0 * rand::random::<f32>());
+        //coords.y = self.coords.y + (5.0 - 10.0 * rand::random::<f32>());
+        //graphics::set_screen_coordinates(ctx, coords).unwrap();
 
         graphics::present(ctx);
 

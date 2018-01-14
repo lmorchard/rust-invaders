@@ -36,10 +36,7 @@ impl<'a> System<'a> for MotionSystem {
 pub struct PositionBoundsSystem;
 
 impl<'a> System<'a> for PositionBoundsSystem {
-    type SystemData = (
-        ReadStorage<'a, PositionBounds>,
-        WriteStorage<'a, Position>,
-    );
+    type SystemData = (ReadStorage<'a, PositionBounds>, WriteStorage<'a, Position>);
 
     fn run(&mut self, data: Self::SystemData) {
         let (bounds, mut pos) = data;
