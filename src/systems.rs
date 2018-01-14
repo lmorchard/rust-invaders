@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use specs::{Entities, Fetch, FetchMut, Join, ReadStorage, System, WriteStorage};
+use specs::{Entities, Fetch, FetchMut, Join, LazyUpdate, ReadStorage, System, WriteStorage};
 
 use ggez::graphics::Vector2;
 
@@ -170,11 +170,12 @@ impl<'a> System<'a> for PlayerControlSystem {
         Fetch<'a, DeltaTime>,
         Fetch<'a, Inputs>,
         WriteStorage<'a, ThrusterSet>,
+        WriteStorage<'a, Gun>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (_delta, inputs, mut thruster_set) = data;
-        for thruster_set in (&mut thruster_set).join() {
+        let (_delta, inputs, mut thruster_set, mut gun) = data;
+        for (thruster_set, gun) in (&mut thruster_set, &mut gun).join() {
             if let Some(lat_thruster) = thruster_set.0.get_mut("lateral") {
                 lat_thruster.throttle = if inputs.right {
                     1.0
@@ -224,6 +225,47 @@ impl<'a> System<'a> for CollisionSystem {
                     collisions.insert(entity, other_entity);
                 }
             }
+        }
+    }
+}
+
+pub struct GunSystem;
+
+impl<'a> System<'a> for GunSystem {
+    type SystemData = (
+        Entities<'a>,
+        Fetch<'a, DeltaTime>,
+        Fetch<'a, LazyUpdate>,
+        ReadStorage<'a, Velocity>,
+        ReadStorage<'a, Position>,
+        WriteStorage<'a, Gun>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities, delta, lazy, velocities, positions, mut guns) = data;
+        let delta = delta.0;
+        for (velocity, position, gun) in (&velocities, &positions, &mut guns).join() {
+            if gun.cooldown > 0.0 {
+                gun.cooldown -= delta;
+                continue;
+            }
+            if !gun.firing {
+                continue;
+            }
+            gun.cooldown = gun.period;
+
+            let bullet = entities.create();
+            lazy.insert(bullet, Position {
+                x: position.x,
+                y: position.y - 50.0,
+                r: 0.0
+            });
+            lazy.insert(bullet, Velocity {
+                x: 0.0,
+                y: -10.0,
+                r: 0.0
+            });
+            lazy.insert(bullet, Collidable { size: 50.0 });
         }
     }
 }

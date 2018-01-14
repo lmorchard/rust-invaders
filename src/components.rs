@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+use specs::{Entity};
+
+use ggez::*;
 use ggez::graphics::{Mesh, Point2, Rect};
 
 #[derive(Component, Debug)]
@@ -48,4 +51,11 @@ pub struct Sprite {
 #[derive(Component, Debug)]
 pub struct Collidable {
     pub size: f32,
+}
+
+#[derive(Component, Debug)]
+pub struct Gun {
+    pub firing: bool,
+    pub period: f32,
+    pub cooldown: f32,
 }

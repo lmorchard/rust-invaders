@@ -35,14 +35,14 @@ struct MainState {
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
+        let by_name = meshes::build_meshes();
         let meshes = vec![
-            meshes::test(ctx, LINE_WIDTH),
-            meshes::player(ctx, LINE_WIDTH),
-            meshes::simple_bullet(ctx, LINE_WIDTH),
-            meshes::asteroid(ctx, LINE_WIDTH),
-            meshes::asteroid(ctx, LINE_WIDTH),
-            meshes::asteroid(ctx, LINE_WIDTH),
-            meshes::asteroid(ctx, LINE_WIDTH),
+            by_name.get("test").unwrap()(ctx, LINE_WIDTH),
+            by_name.get("player").unwrap()(ctx, LINE_WIDTH),
+            by_name.get("simple_bullet").unwrap()(ctx, LINE_WIDTH),
+            by_name.get("asteroid").unwrap()(ctx, LINE_WIDTH),
+            by_name.get("asteroid").unwrap()(ctx, LINE_WIDTH),
+            by_name.get("asteroid").unwrap()(ctx, LINE_WIDTH),
         ];
         Ok(MainState {
             rotation: 0.0,

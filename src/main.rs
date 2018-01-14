@@ -75,6 +75,7 @@ impl<'a, 'b> MainState<'a, 'b> {
         world.register::<Velocity>();
         world.register::<Thruster>();
         world.register::<ThrusterSet>();
+        world.register::<Gun>();
         world.register::<Friction>();
         world.register::<SpeedLimit>();
         world.register::<PlayerControl>();
@@ -90,6 +91,7 @@ impl<'a, 'b> MainState<'a, 'b> {
             .add(SpeedLimitSystem, "speed_limit", &[])
             .add(FrictionSystem, "friction", &[])
             .add(CollisionSystem, "collision", &[])
+            .add(GunSystem, "gun", &[])
             .build();
 
         spawn_player(ctx, &mut world);
@@ -302,6 +304,11 @@ fn spawn_player(ctx: &mut Context, world: &mut World) {
                 angle: PI * 0.5,
             },
         }))
+        .with(Gun {
+            period: 1.0,
+            cooldown: 0.0,
+            firing: true,
+        })
         .with(Collidable { size: 50.0 })
         .with(Sprite {
             offset: Point2::new(0.5, 0.5),
