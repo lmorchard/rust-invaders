@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use specs::{Entities, Fetch, FetchMut, Join, LazyUpdate, ReadStorage, System, WriteStorage};
+use specs::{Entity, Entities, Fetch, FetchMut, Join, LazyUpdate, ReadStorage, System, WriteStorage};
 
 use ggez::graphics::{Point2, Rect, Vector2};
 
@@ -304,6 +304,8 @@ impl<'a> System<'a> for GunSystem {
                 },
             );
             lazy.insert(bullet, Collidable { size: 50.0 });
+            //lazy.insert(bullet, Health(100.0));
+            lazy.insert(bullet, DamageOnCollision(100.0));
             lazy.insert(
                 bullet,
                 Sprite {
@@ -312,6 +314,67 @@ impl<'a> System<'a> for GunSystem {
                     ..Default::default()
                 },
             );
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct DamageEvent {
+    to: Entity,
+    amount: f32
+}
+impl GameEvent for DamageEvent {
+    fn is_kind(&self, want_kind: &str) -> bool {
+        want_kind == "damage"
+    }
+}
+
+pub struct DamageOnCollisionSystem;
+impl<'a> System<'a> for DamageOnCollisionSystem {
+    type SystemData = (
+        Entities<'a>,
+        Fetch<'a, DeltaTime>,
+        Fetch<'a, LazyUpdate>,
+        Fetch<'a, Collisions>,
+        FetchMut<'a, GameEventBuffer>,
+        ReadStorage<'a, Collidable>,
+        ReadStorage<'a, DamageOnCollision>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities, delta, lazy, collisions, mut events, collidables,
+             damage_on_collisions) = data;
+        let delta = delta.0;
+        for (ent, collidable, damage_on_collision) in
+            (&*entities, &collidables, &damage_on_collisions).join() {
+            if let Some(ref ent_collisions) = collisions.get(&ent) {
+                for other_ent in ent_collisions.iter() {
+                    events.push(Box::new(DamageEvent {
+                        to: other_ent.clone(),
+                        amount: damage_on_collision.0
+                    }));
+                    println!("ENT {:?} DAMAGES {:?} FOR {:?}",
+                             ent, other_ent, damage_on_collision.0);
+                }
+            }
+        }
+    }
+}
+
+pub struct HealthSystem;
+impl<'a> System<'a> for HealthSystem {
+    type SystemData = (
+        Entities<'a>,
+        Fetch<'a, DeltaTime>,
+        Fetch<'a, LazyUpdate>,
+        FetchMut<'a, GameEventBuffer>,
+        ReadStorage<'a, Health>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities, delta, lazy, mut events, healths) = data;
+        let delta = delta.0;
+        for (ent, health) in (&*entities, &healths).join() {
         }
     }
 }

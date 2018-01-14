@@ -69,6 +69,7 @@ impl<'a, 'b> MainState<'a, 'b> {
             special: false,
         });
         world.add_resource(Collisions::new());
+        world.add_resource(GameEventBuffer::new());
 
         world.register::<Position>();
         world.register::<PositionBounds>();
@@ -82,6 +83,8 @@ impl<'a, 'b> MainState<'a, 'b> {
         world.register::<PlayerControl>();
         world.register::<Sprite>();
         world.register::<Collidable>();
+        world.register::<Health>();
+        world.register::<DamageOnCollision>();
 
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
@@ -94,6 +97,8 @@ impl<'a, 'b> MainState<'a, 'b> {
             .add(FrictionSystem, "friction", &[])
             .add(CollisionSystem, "collision", &[])
             .add(GunSystem, "gun", &[])
+            .add(DamageOnCollisionSystem, "damage_on_collision", &[])
+            .add(HealthSystem, "health", &["damage_on_collision"])
             .build();
 
         spawn_player(&mut world);
@@ -140,6 +145,9 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             let dt = ggez::timer::get_delta(ctx);
             let mut delta = self.world.write_resource::<DeltaTime>();
             *delta = DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
+
+            let mut events = self.world.write_resource::<GameEventBuffer>();
+            events.clear();
         }
         self.dispatcher.dispatch(&mut self.world.res);
         self.world.maintain();
@@ -290,7 +298,9 @@ fn spawn_player(world: &mut World) {
             PLAYFIELD_WIDTH - 50.0,
             PLAYFIELD_HEIGHT - 50.0,
         )))
-        .with(Velocity { ..Default::default() })
+        .with(Velocity {
+            ..Default::default()
+        })
         .with(SpeedLimit(800.0))
         .with(Friction(6000.0))
         .with(ThrusterSet(hashmap!{
@@ -338,5 +348,7 @@ fn spawn_asteroid(world: &mut World) {
             scale: Point2::new(size, size),
             ..Default::default()
         })
+        .with(Health(100.0))
+        //.with(DamageOnCollision(100.0))
         .build();
 }

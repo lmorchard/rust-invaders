@@ -8,6 +8,8 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
+- [ ] Reorganize things into component/system/resource/etc plugin bundles?
+
 - [ ] Stateful sprites, so the asteroids remember their shape rather than changing every frame
 
 - [ ] Damage on collision from bullets, to destroy asteroids and baddies
