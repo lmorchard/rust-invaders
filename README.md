@@ -17,3 +17,7 @@ You know what? I just don't really know, but it'll be a mess.
 - [ ] Screen shake transforms for visual juice
 
 - [ ] Sound effects in a bleepy bloopy style
+
+- [ ] Pause menu
+
+- [ ] Settings menu - resolution, keybindings, etc
