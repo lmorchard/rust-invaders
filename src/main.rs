@@ -18,6 +18,7 @@ use invaders::graphics::meshes::{build_mesh, MeshSelection};
 use invaders::components::*;
 use invaders::systems::*;
 use invaders::resources::*;
+use invaders::plugins;
 
 const PLAYFIELD_WIDTH: f32 = 1600.0;
 const PLAYFIELD_HEIGHT: f32 = 900.0;
@@ -69,7 +70,6 @@ impl<'a, 'b> MainState<'a, 'b> {
             special: false,
         });
         world.add_resource(Collisions::new());
-        world.add_resource(GameEventBuffer::new());
 
         world.register::<Position>();
         world.register::<PositionBounds>();
@@ -83,8 +83,6 @@ impl<'a, 'b> MainState<'a, 'b> {
         world.register::<PlayerControl>();
         world.register::<Sprite>();
         world.register::<Collidable>();
-        world.register::<Health>();
-        world.register::<DamageOnCollision>();
 
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
@@ -96,10 +94,11 @@ impl<'a, 'b> MainState<'a, 'b> {
             .add(SpeedLimitSystem, "speed_limit", &[])
             .add(FrictionSystem, "friction", &[])
             .add(CollisionSystem, "collision", &[])
-            .add(GunSystem, "gun", &[])
-            .add(DamageOnCollisionSystem, "damage_on_collision", &[])
-            .add(HealthSystem, "health", &["damage_on_collision"])
-            .build();
+            .add(GunSystem, "gun", &[]);
+
+        let dispatcher = plugins::health_damage::init(&mut world, dispatcher);
+
+        let dispatcher = dispatcher.build();
 
         spawn_player(&mut world);
 
@@ -145,10 +144,10 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             let dt = ggez::timer::get_delta(ctx);
             let mut delta = self.world.write_resource::<DeltaTime>();
             *delta = DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
-
-            let mut events = self.world.write_resource::<GameEventBuffer>();
-            events.clear();
         }
+
+        plugins::health_damage::update(&mut self.world, ctx);
+
         self.dispatcher.dispatch(&mut self.world.res);
         self.world.maintain();
         Ok(())
@@ -171,27 +170,29 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             ),
         ).unwrap();
 
-        let entities = self.world.entities();
-        let positions = self.world.read::<Position>();
-        let mut sprites = self.world.write::<Sprite>();
+        {
+            let entities = self.world.entities();
+            let positions = self.world.read::<Position>();
+            let mut sprites = self.world.write::<Sprite>();
 
-        // TODO: cache these per-sprite component! stateful asteroids
-        for (_ent, pos, spr) in (&*entities, &positions, &mut sprites).join() {
-            let selection = &spr.mesh_selection;
-            let line_width = 1.0 / spr.scale.x;
-            let mesh = &spr.mesh
-                .get_or_insert_with(|| build_mesh(selection, ctx, line_width));
-            graphics::draw_ex(
-                ctx,
-                *mesh,
-                DrawParam {
-                    dest: Point2::new(pos.x, pos.y),
-                    rotation: pos.r,
-                    offset: spr.offset,
-                    scale: spr.scale,
-                    ..Default::default()
-                },
-            )?;
+            // TODO: cache these per-sprite component! stateful asteroids
+            for (_ent, pos, spr) in (&*entities, &positions, &mut sprites).join() {
+                let selection = &spr.mesh_selection;
+                let line_width = 1.0 / spr.scale.x;
+                let mesh = &spr.mesh
+                    .get_or_insert_with(|| build_mesh(selection, ctx, line_width));
+                graphics::draw_ex(
+                    ctx,
+                    *mesh,
+                    DrawParam {
+                        dest: Point2::new(pos.x, pos.y),
+                        rotation: pos.r,
+                        offset: spr.offset,
+                        scale: spr.scale,
+                        ..Default::default()
+                    },
+                )?;
+            }
         }
 
         // Hacky screen shake (for future reference):
@@ -199,6 +200,8 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         //coords.x = self.coords.x + (5.0 - 10.0 * rand::random::<f32>());
         //coords.y = self.coords.y + (5.0 - 10.0 * rand::random::<f32>());
         //graphics::set_screen_coordinates(ctx, coords).unwrap();
+
+        plugins::health_damage::draw(&mut self.world, ctx);
 
         graphics::present(ctx);
 
@@ -348,7 +351,7 @@ fn spawn_asteroid(world: &mut World) {
             scale: Point2::new(size, size),
             ..Default::default()
         })
-        .with(Health(100.0))
-        //.with(DamageOnCollision(100.0))
+        .with(plugins::health_damage::Health(100.0))
+        //.with(plugins::health_damage::DamageOnCollision(100.0))
         .build();
 }

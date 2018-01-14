@@ -106,9 +106,3 @@ impl Default for Gun {
         }
     }
 }
-
-#[derive(Component, Debug)]
-pub struct Health(pub f32);
-
-#[derive(Component, Debug)]
-pub struct DamageOnCollision(pub f32);

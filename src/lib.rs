@@ -8,3 +8,4 @@ pub mod resources;
 pub mod components;
 pub mod systems;
 pub mod graphics;
+pub mod plugins;

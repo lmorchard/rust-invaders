@@ -42,25 +42,3 @@ impl DerefMut for Collisions {
         &mut self.0
     }
 }
-
-pub trait GameEvent {
-    fn is_kind(&self, &str) -> bool;
-}
-
-pub struct GameEventBuffer(pub Vec<Box<GameEvent + Send + Sync>>);
-impl GameEventBuffer {
-    pub fn new() -> Self {
-        GameEventBuffer(Vec::new())
-    }
-}
-impl Deref for GameEventBuffer {
-    type Target = Vec<Box<GameEvent + Send + Sync>>;
-    fn deref(&self) -> &Vec<Box<GameEvent + Send + Sync>> {
-        &self.0
-    }
-}
-impl DerefMut for GameEventBuffer {
-    fn deref_mut(&mut self) -> &mut Vec<Box<GameEvent + Send + Sync>> {
-        &mut self.0
-    }
-}
