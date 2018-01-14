@@ -1,7 +1,7 @@
 extern crate rand;
 
 use std::f32::consts::PI;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 
 use ggez::*;
 use ggez::graphics::{DrawMode, Mesh, MeshBuilder, Point2};
@@ -21,8 +21,10 @@ macro_rules! points {
 
 type MeshCallback<'a> = Box<(Fn(&mut Context, f32) -> Mesh + 'static)>;
 fn mk_mesh_callback<'a, F>(f: F) -> MeshCallback<'a>
-    where F: Fn(&mut Context, f32) -> Mesh + 'static {
-        Box::new(f) as MeshCallback
+where
+    F: Fn(&mut Context, f32) -> Mesh + 'static,
+{
+    Box::new(f) as MeshCallback
 }
 
 pub fn build_meshes<'a>() -> HashMap<&'static str, MeshCallback<'a>> {

@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use specs::{Entities, Fetch, FetchMut, Join, LazyUpdate, ReadStorage, System, WriteStorage};
 
-use ggez::graphics::{Point2, Vector2};
+use ggez::graphics::{Point2, Rect, Vector2};
 
 use resources::*;
 use components::*;
@@ -51,6 +51,28 @@ impl<'a> System<'a> for PositionBoundsSystem {
                 pos.y = bounds.y;
             } else if pos.y > bounds.y + bounds.h {
                 pos.y = bounds.y + bounds.h;
+            }
+        }
+    }
+}
+
+pub struct DespawnBoundsSystem;
+
+impl<'a> System<'a> for DespawnBoundsSystem {
+    type SystemData = (
+        Entities<'a>,
+        ReadStorage<'a, Position>,
+        ReadStorage<'a, DespawnBounds>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities, positions, bounds) = data;
+        for (entity, pos, bounds) in (&*entities, &positions, &bounds).join() {
+            let bounds = bounds.0;
+            if pos.x < bounds.x || pos.x > bounds.x + bounds.w || pos.y < bounds.y
+                || pos.y > bounds.y + bounds.h
+            {
+                entities.delete(entity).unwrap();
             }
         }
     }
@@ -176,6 +198,8 @@ impl<'a> System<'a> for PlayerControlSystem {
     fn run(&mut self, data: Self::SystemData) {
         let (_delta, inputs, mut thruster_set, mut gun) = data;
         for (thruster_set, gun) in (&mut thruster_set, &mut gun).join() {
+            gun.firing = inputs.fire;
+
             if let Some(lat_thruster) = thruster_set.0.get_mut("lateral") {
                 lat_thruster.throttle = if inputs.right {
                     1.0
@@ -185,6 +209,7 @@ impl<'a> System<'a> for PlayerControlSystem {
                     0.0
                 }
             }
+
             if let Some(long_thruster) = thruster_set.0.get_mut("longitudinal") {
                 long_thruster.throttle = if inputs.up {
                     1.0
@@ -255,22 +280,35 @@ impl<'a> System<'a> for GunSystem {
             gun.cooldown = gun.period;
 
             let bullet = entities.create();
-            lazy.insert(bullet, Position {
-                x: position.x,
-                y: position.y - 50.0,
-                r: 0.0
-            });
-            lazy.insert(bullet, Velocity {
-                x: 0.0,
-                y: -800.0,
-                r: 0.0
-            });
+            lazy.insert(
+                bullet,
+                Position {
+                    x: position.x,
+                    y: position.y - 50.0,
+                    r: 0.0,
+                },
+            );
+            lazy.insert(
+                bullet,
+                DespawnBounds(Rect::new(-800.0, -450.0, 1600.0, 900.0)),
+            );
+            lazy.insert(
+                bullet,
+                Velocity {
+                    x: 0.0,
+                    y: -800.0,
+                    r: 0.0,
+                },
+            );
             lazy.insert(bullet, Collidable { size: 50.0 });
-            lazy.insert(bullet, Sprite {
-                offset: Point2::new(0.5, 0.5),
-                mesh: "simple_bullet",
-                scale: Point2::new(50.0, 50.0),
-            });
+            lazy.insert(
+                bullet,
+                Sprite {
+                    offset: Point2::new(0.5, 0.5),
+                    mesh: "simple_bullet",
+                    scale: Point2::new(50.0, 50.0),
+                },
+            );
         }
     }
 }

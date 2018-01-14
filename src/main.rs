@@ -33,7 +33,7 @@ pub fn main() {
 
     ctx.print_resource_stats();
 
-    let state = &mut MainState::new(ctx).unwrap();
+    let state = &mut MainState::new().unwrap();
     let (width, height) = graphics::get_size(ctx);
     state.update_screen_coordinates(ctx, width, height);
 
@@ -56,7 +56,7 @@ impl<'a, 'b> fmt::Display for MainState<'a, 'b> {
 }
 
 impl<'a, 'b> MainState<'a, 'b> {
-    fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
+    fn new() -> GameResult<MainState<'a, 'b>> {
         let mut world = World::new();
 
         world.add_resource(DeltaTime(0.016));
@@ -72,6 +72,7 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         world.register::<Position>();
         world.register::<PositionBounds>();
+        world.register::<DespawnBounds>();
         world.register::<Velocity>();
         world.register::<Thruster>();
         world.register::<ThrusterSet>();
@@ -85,6 +86,7 @@ impl<'a, 'b> MainState<'a, 'b> {
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
             .add(PositionBoundsSystem, "position_bounds", &[])
+            .add(DespawnBoundsSystem, "despawn_bounds", &[])
             .add(ThrusterSystem, "thruster", &[])
             .add(ThrusterSetSystem, "thruster_set", &[])
             .add(PlayerControlSystem, "player_control", &[])
@@ -94,10 +96,10 @@ impl<'a, 'b> MainState<'a, 'b> {
             .add(GunSystem, "gun", &[])
             .build();
 
-        spawn_player(ctx, &mut world);
+        spawn_player(&mut world);
 
         for _idx in 0..20 {
-            spawn_asteroid(ctx, &mut world);
+            spawn_asteroid(&mut world);
         }
 
         Ok(MainState {
@@ -274,7 +276,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     }
 }
 
-fn spawn_player(ctx: &mut Context, world: &mut World) {
+fn spawn_player(world: &mut World) {
     world
         .create_entity()
         .with(Position {
@@ -322,7 +324,7 @@ fn spawn_player(ctx: &mut Context, world: &mut World) {
         .build();
 }
 
-fn spawn_asteroid(ctx: &mut Context, world: &mut World) {
+fn spawn_asteroid(world: &mut World) {
     let size = 25.0 + 150.0 * rand::random::<f32>();
     world
         .create_entity()

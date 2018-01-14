@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use specs::{Entity};
-
-use ggez::*;
-use ggez::graphics::{Mesh, Point2, Rect};
+use ggez::graphics::{Point2, Rect};
 
 #[derive(Component, Debug)]
 pub struct Position {
@@ -14,6 +11,9 @@ pub struct Position {
 
 #[derive(Component, Debug)]
 pub struct PositionBounds(pub Rect);
+
+#[derive(Component, Debug)]
+pub struct DespawnBounds(pub Rect);
 
 #[derive(Component, Debug)]
 pub struct Velocity {
