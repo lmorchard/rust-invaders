@@ -45,7 +45,7 @@ pub struct PlayerControl;
 pub struct Sprite {
     pub scale: Point2,
     pub offset: Point2,
-    pub mesh: Mesh,
+    pub mesh: &'static str,
 }
 
 #[derive(Component, Debug)]

@@ -165,10 +165,13 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         let positions = self.world.read::<Position>();
         let sprites = self.world.read::<Sprite>();
 
+        let by_name = meshes::build_meshes();
+
         for (_ent, pos, spr) in (&*entities, &positions, &sprites).join() {
+            let mesh = by_name.get(&spr.mesh).unwrap()(ctx, 1.0 / spr.scale.x);
             graphics::draw_ex(
                 ctx,
-                &spr.mesh,
+                &mesh,
                 DrawParam {
                     dest: Point2::new(pos.x, pos.y),
                     rotation: pos.r,
@@ -305,14 +308,14 @@ fn spawn_player(ctx: &mut Context, world: &mut World) {
             },
         }))
         .with(Gun {
-            period: 1.0,
+            period: 0.5,
             cooldown: 0.0,
             firing: true,
         })
         .with(Collidable { size: 50.0 })
         .with(Sprite {
             offset: Point2::new(0.5, 0.5),
-            mesh: meshes::player(ctx, 1.0 / 50.0),
+            mesh: "player",
             scale: Point2::new(50.0, 50.0),
         })
         .with(PlayerControl)
@@ -336,7 +339,7 @@ fn spawn_asteroid(ctx: &mut Context, world: &mut World) {
         .with(Collidable { size: size })
         .with(Sprite {
             offset: Point2::new(0.5, 0.5),
-            mesh: meshes::asteroid(ctx, 1.0 / size),
+            mesh: "asteroid",
             scale: Point2::new(size, size),
         })
         .build();

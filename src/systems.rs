@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use specs::{Entities, Fetch, FetchMut, Join, LazyUpdate, ReadStorage, System, WriteStorage};
 
-use ggez::graphics::Vector2;
+use ggez::graphics::{Point2, Vector2};
 
 use resources::*;
 use components::*;
@@ -262,10 +262,15 @@ impl<'a> System<'a> for GunSystem {
             });
             lazy.insert(bullet, Velocity {
                 x: 0.0,
-                y: -10.0,
+                y: -800.0,
                 r: 0.0
             });
             lazy.insert(bullet, Collidable { size: 50.0 });
+            lazy.insert(bullet, Sprite {
+                offset: Point2::new(0.5, 0.5),
+                mesh: "simple_bullet",
+                scale: Point2::new(50.0, 50.0),
+            });
         }
     }
 }
