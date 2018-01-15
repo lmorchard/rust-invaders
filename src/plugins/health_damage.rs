@@ -17,13 +17,6 @@ pub fn init<'a, 'b>(
         .add(HealthSystem, "health", &["damage_on_collision"])
 }
 
-pub fn update_after(world: &mut World, ctx: &mut Context) {
-    let mut events = world.write_resource::<DamageEventQueue>();
-    events.0.clear();
-}
-
-pub fn draw_after(world: &mut World, ctx: &mut Context) {}
-
 #[derive(Component, Debug)]
 pub struct Health(pub f32);
 
@@ -76,20 +69,24 @@ impl<'a> System<'a> for HealthSystem {
         Entities<'a>,
         Fetch<'a, DeltaTime>,
         FetchMut<'a, DamageEventQueue>,
+        FetchMut<'a, plugins::despawn::DespawnEventQueue>,
         WriteStorage<'a, Health>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, delta, damage_events, mut healths) = data;
+        let (entities, delta, mut damage_events, mut despawn_events, mut healths) = data;
         let delta = delta.0;
         for damage_event in &damage_events.0 {
             if let Some(ref mut health) = healths.get_mut(damage_event.to) {
                 health.0 -= damage_event.amount;
             }
         }
+        damage_events.0.clear();
         for (entity, health) in (&*entities, &mut healths).join() {
             if health.0 <= 0.0 {
-                entities.delete(entity).unwrap();
+                despawn_events
+                    .0
+                    .push(plugins::despawn::DespawnEvent { entity: entity });
             }
         }
     }

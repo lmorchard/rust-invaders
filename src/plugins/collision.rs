@@ -13,14 +13,8 @@ pub fn init<'a, 'b>(
 ) -> DispatcherBuilder<'a, 'b> {
     world.add_resource(Collisions::new());
     world.register::<Collidable>();
-    dispatcher
-        .add(CollisionSystem, "collision", &[])
+    dispatcher.add(CollisionSystem, "collision", &[])
 }
-
-pub fn update_after(world: &mut World, ctx: &mut Context) {
-}
-
-pub fn draw_after(world: &mut World, ctx: &mut Context) {}
 
 #[derive(Debug)]
 pub struct Collisions(pub HashMap<Entity, HashSet<Entity>>);

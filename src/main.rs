@@ -95,6 +95,7 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         let dispatcher = plugins::collision::init(&mut world, dispatcher);
         let dispatcher = plugins::health_damage::init(&mut world, dispatcher);
+        let dispatcher = plugins::despawn::init(&mut world, dispatcher);
 
         let dispatcher = dispatcher.build();
 
@@ -143,9 +144,11 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             let mut delta = self.world.write_resource::<DeltaTime>();
             *delta = DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
         }
+
         self.dispatcher.dispatch(&mut self.world.res);
-        plugins::collision::update_after(&mut self.world, ctx);
-        plugins::health_damage::update_after(&mut self.world, ctx);
+
+        // plugins::collision::update_after(&mut self.world, ctx);
+
         self.world.maintain();
         Ok(())
     }
@@ -198,8 +201,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         //coords.y = self.coords.y + (5.0 - 10.0 * rand::random::<f32>());
         //graphics::set_screen_coordinates(ctx, coords).unwrap();
 
-        plugins::collision::draw_after(&mut self.world, ctx);
-        plugins::health_damage::draw_after(&mut self.world, ctx);
+        // plugins::collision::draw_after(&mut self.world, ctx);
 
         graphics::present(ctx);
 

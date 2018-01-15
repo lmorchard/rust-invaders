@@ -232,15 +232,14 @@ impl<'a> System<'a> for GunSystem {
         Entities<'a>,
         Fetch<'a, DeltaTime>,
         Fetch<'a, LazyUpdate>,
-        ReadStorage<'a, Velocity>,
         ReadStorage<'a, Position>,
         WriteStorage<'a, Gun>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, delta, lazy, velocities, positions, mut guns) = data;
+        let (entities, delta, lazy, positions, mut guns) = data;
         let delta = delta.0;
-        for (velocity, position, gun) in (&velocities, &positions, &mut guns).join() {
+        for (position, gun) in (&positions, &mut guns).join() {
             if gun.cooldown > 0.0 {
                 gun.cooldown -= delta;
                 continue;
@@ -271,8 +270,8 @@ impl<'a> System<'a> for GunSystem {
                 },
             );
             lazy.insert(bullet, plugins::collision::Collidable { size: 50.0 });
-            //lazy.insert(bullet, plugins::health_damage::Health(100.0));
             lazy.insert(bullet, plugins::health_damage::DamageOnCollision(100.0));
+            lazy.insert(bullet, plugins::despawn::DespawnOnCollision);
             lazy.insert(
                 bullet,
                 Sprite {
