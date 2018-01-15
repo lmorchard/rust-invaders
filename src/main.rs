@@ -72,7 +72,6 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         world.register::<Position>();
         world.register::<PositionBounds>();
-        world.register::<DespawnBounds>();
         world.register::<Velocity>();
         world.register::<Thruster>();
         world.register::<ThrusterSet>();
@@ -85,7 +84,6 @@ impl<'a, 'b> MainState<'a, 'b> {
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
             .add(PositionBoundsSystem, "position_bounds", &[])
-            .add(DespawnBoundsSystem, "despawn_bounds", &[])
             .add(ThrusterSystem, "thruster", &[])
             .add(ThrusterSetSystem, "thruster_set", &[])
             .add(PlayerControlSystem, "player_control", &[])
@@ -352,6 +350,6 @@ fn spawn_asteroid(world: &mut World) {
             ..Default::default()
         })
         .with(health_damage::Health(100.0))
-        //.with(health_damage::DamageOnCollision(100.0))
+        .with(health_damage::DamageOnCollision(100.0))
         .build();
 }

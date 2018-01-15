@@ -1,10 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 
-use ggez::*;
 use specs::*;
 
-use resources::*;
 use components::*;
 
 pub fn init<'a, 'b>(

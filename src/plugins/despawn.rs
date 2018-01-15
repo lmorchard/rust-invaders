@@ -1,7 +1,6 @@
-use ggez::*;
+use ggez::graphics::*;
 use specs::*;
 
-use resources::*;
 use components::*;
 use plugins::*;
 
@@ -10,8 +9,10 @@ pub fn init<'a, 'b>(
     dispatcher: DispatcherBuilder<'a, 'b>,
 ) -> DispatcherBuilder<'a, 'b> {
     world.add_resource(DespawnEventQueue::new());
+    world.register::<DespawnBounds>();
     world.register::<DespawnOnCollision>();
     dispatcher
+        .add(DespawnBoundsSystem, "despawn_bounds_system", &[])
         .add(DespawnOnCollisionSystem, "despawn_on_collision_system", &[])
         .add(DespawnRemovalSystem, "despawn_removal_system", &[])
 }
@@ -26,6 +27,31 @@ pub struct DespawnEventQueue(pub Vec<DespawnEvent>);
 impl DespawnEventQueue {
     pub fn new() -> DespawnEventQueue {
         DespawnEventQueue(Vec::new())
+    }
+}
+
+#[derive(Component, Debug)]
+pub struct DespawnBounds(pub Rect);
+
+pub struct DespawnBoundsSystem;
+
+impl<'a> System<'a> for DespawnBoundsSystem {
+    type SystemData = (
+        Entities<'a>,
+        ReadStorage<'a, Position>,
+        ReadStorage<'a, DespawnBounds>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities, positions, bounds) = data;
+        for (entity, pos, bounds) in (&*entities, &positions, &bounds).join() {
+            let bounds = bounds.0;
+            if pos.x < bounds.x || pos.x > bounds.x + bounds.w || pos.y < bounds.y
+                || pos.y > bounds.y + bounds.h
+            {
+                entities.delete(entity).unwrap();
+            }
+        }
     }
 }
 

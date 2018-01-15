@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use specs::{Entities, Fetch, FetchMut, Join, LazyUpdate, ReadStorage, System, WriteStorage};
+use specs::{Entities, Fetch, Join, LazyUpdate, ReadStorage, System, WriteStorage};
 
 use ggez::graphics::{Point2, Rect, Vector2};
 
@@ -53,28 +53,6 @@ impl<'a> System<'a> for PositionBoundsSystem {
                 pos.y = bounds.y;
             } else if pos.y > bounds.y + bounds.h {
                 pos.y = bounds.y + bounds.h;
-            }
-        }
-    }
-}
-
-pub struct DespawnBoundsSystem;
-
-impl<'a> System<'a> for DespawnBoundsSystem {
-    type SystemData = (
-        Entities<'a>,
-        ReadStorage<'a, Position>,
-        ReadStorage<'a, DespawnBounds>,
-    );
-
-    fn run(&mut self, data: Self::SystemData) {
-        let (entities, positions, bounds) = data;
-        for (entity, pos, bounds) in (&*entities, &positions, &bounds).join() {
-            let bounds = bounds.0;
-            if pos.x < bounds.x || pos.x > bounds.x + bounds.w || pos.y < bounds.y
-                || pos.y > bounds.y + bounds.h
-            {
-                entities.delete(entity).unwrap();
             }
         }
     }
@@ -260,10 +238,6 @@ impl<'a> System<'a> for GunSystem {
             );
             lazy.insert(
                 bullet,
-                DespawnBounds(Rect::new(-800.0, -450.0, 1600.0, 900.0)),
-            );
-            lazy.insert(
-                bullet,
                 Velocity {
                     y: -800.0,
                     ..Default::default()
@@ -272,6 +246,10 @@ impl<'a> System<'a> for GunSystem {
             lazy.insert(bullet, collision::Collidable { size: 50.0 });
             lazy.insert(bullet, health_damage::DamageOnCollision(100.0));
             lazy.insert(bullet, despawn::DespawnOnCollision);
+            lazy.insert(
+                bullet,
+                despawn::DespawnBounds(Rect::new(-800.0, -450.0, 1600.0, 900.0)),
+            );
             lazy.insert(
                 bullet,
                 Sprite {

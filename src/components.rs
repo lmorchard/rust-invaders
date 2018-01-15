@@ -24,9 +24,6 @@ impl Default for Position {
 pub struct PositionBounds(pub Rect);
 
 #[derive(Component, Debug)]
-pub struct DespawnBounds(pub Rect);
-
-#[derive(Component, Debug)]
 pub struct Velocity {
     pub x: f32,
     pub y: f32,

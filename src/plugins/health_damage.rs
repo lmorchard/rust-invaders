@@ -1,8 +1,5 @@
-use ggez::*;
 use specs::*;
 
-use resources::*;
-use components::*;
 use plugins::*;
 
 pub fn init<'a, 'b>(
@@ -49,6 +46,8 @@ impl<'a> System<'a> for DamageOnCollisionSystem {
 
     fn run(&mut self, data: Self::SystemData) {
         let (entities, collisions, mut damage_events, damages) = data;
+        // TODO: Set a timer to only send damage once every so often, rather than for every frame
+        // entities are in collision
         for (ent, damage) in (&*entities, &damages).join() {
             if let Some(ref ent_collisions) = collisions.get(&ent) {
                 for other_ent in ent_collisions.iter() {
@@ -67,15 +66,14 @@ pub struct HealthSystem;
 impl<'a> System<'a> for HealthSystem {
     type SystemData = (
         Entities<'a>,
-        Fetch<'a, DeltaTime>,
         FetchMut<'a, DamageEventQueue>,
         FetchMut<'a, despawn::DespawnEventQueue>,
         WriteStorage<'a, Health>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, delta, mut damage_events, mut despawn_events, mut healths) = data;
-        let delta = delta.0;
+        let (entities, mut damage_events, mut despawn_events, mut healths) = data;
+        // TODO: Maintain a timer to ignore repeated damage from a source for a period of time
         for damage_event in &damage_events.0 {
             if let Some(ref mut health) = healths.get_mut(damage_event.to) {
                 health.0 -= damage_event.amount;
