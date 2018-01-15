@@ -6,7 +6,7 @@ extern crate specs_derive;
 
 use specs::*;
 use ggez::*;
-use ggez::graphics::{Rect};
+use ggez::graphics::Rect;
 
 pub mod plugins;
 

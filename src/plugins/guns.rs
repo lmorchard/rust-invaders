@@ -77,7 +77,7 @@ impl<'a> System<'a> for GunSystem {
             lazy.insert(
                 bullet,
                 sprites::Sprite {
-                    mesh_selection: sprites::MeshSelection::SimpleBullet,
+                    shape: sprites::Shape::SimpleBullet,
                     scale: Point2::new(50.0, 50.0),
                     ..Default::default()
                 },

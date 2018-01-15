@@ -8,10 +8,6 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
-- [ ] Get cached Meshes out of Sprite components, use a local hashmap of Entity
-
-- [ ] Rename MeshSelection to Shape
-
 - [ ] Spawn explosions / tombstones on entity despawn
 
 - [ ] Animated sprite meshes

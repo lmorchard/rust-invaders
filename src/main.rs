@@ -193,7 +193,7 @@ fn spawn_player(world: &mut World) {
         //.with(health_damage::Health(100.0))
         //.with(health_damage::DamageOnCollision(100.0))
         .with(sprites::Sprite {
-            mesh_selection: sprites::MeshSelection::Player,
+            shape: sprites::Shape::Player,
             scale: Point2::new(50.0, 50.0),
             ..Default::default()
         })
@@ -217,7 +217,7 @@ fn spawn_asteroid(world: &mut World) {
         })
         .with(collision::Collidable { size: size })
         .with(sprites::Sprite {
-            mesh_selection: sprites::MeshSelection::Asteroid,
+            shape: sprites::Shape::Asteroid,
             scale: Point2::new(size, size),
             ..Default::default()
         })
