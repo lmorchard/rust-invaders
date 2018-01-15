@@ -1,6 +1,5 @@
 use std::f32::consts::PI;
-use std::ops::{Deref, DerefMut};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use specs::*;
 use ggez::*;
 use ggez::graphics::{DrawMode, DrawParam, Mesh, MeshBuilder, Point2};
@@ -24,17 +23,6 @@ impl SpriteCache {
         SpriteCache(HashMap::new())
     }
 }
-impl Deref for SpriteCache {
-    type Target = HashMap<Entity, Mesh>;
-    fn deref(&self) -> &HashMap<Entity, Mesh> {
-        &self.0
-    }
-}
-impl DerefMut for SpriteCache {
-    fn deref_mut(&mut self) -> &mut HashMap<Entity, Mesh> {
-        &mut self.0
-    }
-}
 
 pub fn draw(world: &mut World, ctx: &mut Context) -> GameResult<()> {
     let entities = world.entities();
@@ -42,13 +30,18 @@ pub fn draw(world: &mut World, ctx: &mut Context) -> GameResult<()> {
     let sprites = world.read::<Sprite>();
     let mut sprite_cache = world.write_resource::<SpriteCache>();
 
-    // TODO: cache these per-sprite component! stateful asteroids
+    let mut seen_entities: HashSet<Entity> = HashSet::new();
+
     for (ent, pos, spr) in (&*entities, &positions, &sprites).join() {
         let shape = &spr.shape;
         let line_width = 1.0 / spr.scale.x;
+
         let mesh = sprite_cache
+            .0
             .entry(ent)
             .or_insert_with(|| sprites::build_mesh(shape, ctx, line_width));
+        seen_entities.insert(ent);
+
         graphics::draw_ex(
             ctx,
             &*mesh,
@@ -60,6 +53,14 @@ pub fn draw(world: &mut World, ctx: &mut Context) -> GameResult<()> {
                 ..Default::default()
             },
         )?;
+    }
+
+    // Clean up cached renderings for entities we didn't see during rendering
+    let keys: Vec<Entity> = sprite_cache.0.keys().cloned().collect();
+    for ent in keys {
+        if !seen_entities.contains(&ent) {
+            sprite_cache.0.remove(&ent);
+        }
     }
 
     Ok(())

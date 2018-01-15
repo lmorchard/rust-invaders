@@ -12,7 +12,11 @@ pub fn init<'a, 'b>(
     dispatcher
         .add(DespawnBoundsSystem, "despawn_bounds_system", &[])
         .add(DespawnOnCollisionSystem, "despawn_on_collision_system", &[])
-        .add(DespawnRemovalSystem, "despawn_removal_system", &[])
+        .add(
+            DespawnRemovalSystem,
+            "despawn_removal_system",
+            &["despawn_bounds_system", "despawn_on_collision_system"],
+        )
 }
 
 #[derive(Debug)]
