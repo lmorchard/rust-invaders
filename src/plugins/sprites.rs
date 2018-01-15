@@ -88,7 +88,6 @@ pub enum Shape {
     Asteroid,
     SimpleBullet,
 }
-
 impl Default for Shape {
     fn default() -> Shape {
         Shape::Test

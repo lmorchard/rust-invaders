@@ -77,7 +77,7 @@ pub fn key_up_event(
 }
 
 pub fn controller_button_down_event(
-    world: &mut World,
+    _world: &mut World,
     _ctx: &mut Context,
     btn: Button,
     instance_id: i32,
@@ -89,7 +89,7 @@ pub fn controller_button_down_event(
 }
 
 pub fn controller_button_up_event(
-    world: &mut World,
+    _world: &mut World,
     _ctx: &mut Context,
     btn: Button,
     instance_id: i32,
@@ -101,7 +101,7 @@ pub fn controller_button_up_event(
 }
 
 pub fn controller_axis_event(
-    world: &mut World,
+    _world: &mut World,
     _ctx: &mut Context,
     axis: Axis,
     value: i16,
