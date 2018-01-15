@@ -3,7 +3,7 @@ use specs::*;
 
 use resources::*;
 use components::*;
-use plugins;
+use plugins::*;
 
 pub fn init<'a, 'b>(
     world: &mut World,
@@ -36,7 +36,7 @@ pub struct DespawnOnCollisionSystem;
 impl<'a> System<'a> for DespawnOnCollisionSystem {
     type SystemData = (
         Entities<'a>,
-        Fetch<'a, plugins::collision::Collisions>,
+        Fetch<'a, collision::Collisions>,
         FetchMut<'a, DespawnEventQueue>,
         ReadStorage<'a, DespawnOnCollision>,
     );
@@ -44,9 +44,7 @@ impl<'a> System<'a> for DespawnOnCollisionSystem {
         let (entities, collisions, mut despawn_events, on_collisions) = data;
         for (entity, _on_collision) in (&*entities, &on_collisions).join() {
             if let Some(_) = collisions.get(&entity) {
-                despawn_events
-                    .0
-                    .push(plugins::despawn::DespawnEvent { entity });
+                despawn_events.0.push(despawn::DespawnEvent { entity });
             }
         }
     }

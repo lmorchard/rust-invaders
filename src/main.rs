@@ -18,7 +18,7 @@ use invaders::graphics::meshes::{build_mesh, MeshSelection};
 use invaders::components::*;
 use invaders::systems::*;
 use invaders::resources::*;
-use invaders::plugins;
+use invaders::plugins::*;
 
 const PLAYFIELD_WIDTH: f32 = 1600.0;
 const PLAYFIELD_HEIGHT: f32 = 900.0;
@@ -93,9 +93,9 @@ impl<'a, 'b> MainState<'a, 'b> {
             .add(FrictionSystem, "friction", &[])
             .add(GunSystem, "gun", &[]);
 
-        let dispatcher = plugins::collision::init(&mut world, dispatcher);
-        let dispatcher = plugins::health_damage::init(&mut world, dispatcher);
-        let dispatcher = plugins::despawn::init(&mut world, dispatcher);
+        let dispatcher = collision::init(&mut world, dispatcher);
+        let dispatcher = health_damage::init(&mut world, dispatcher);
+        let dispatcher = despawn::init(&mut world, dispatcher);
 
         let dispatcher = dispatcher.build();
 
@@ -147,7 +147,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
 
         self.dispatcher.dispatch(&mut self.world.res);
 
-        // plugins::collision::update_after(&mut self.world, ctx);
+        // collision::update_after(&mut self.world, ctx);
 
         self.world.maintain();
         Ok(())
@@ -201,7 +201,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         //coords.y = self.coords.y + (5.0 - 10.0 * rand::random::<f32>());
         //graphics::set_screen_coordinates(ctx, coords).unwrap();
 
-        // plugins::collision::draw_after(&mut self.world, ctx);
+        // collision::draw_after(&mut self.world, ctx);
 
         graphics::present(ctx);
 
@@ -322,7 +322,7 @@ fn spawn_player(world: &mut World) {
             period: 0.25,
             ..Default::default()
         })
-        .with(plugins::collision::Collidable { size: 50.0 })
+        .with(collision::Collidable { size: 50.0 })
         .with(Sprite {
             mesh_selection: MeshSelection::Player,
             scale: Point2::new(50.0, 50.0),
@@ -345,13 +345,13 @@ fn spawn_asteroid(world: &mut World) {
             r: PI * rand::random::<f32>(),
             ..Default::default()
         })
-        .with(plugins::collision::Collidable { size: size })
+        .with(collision::Collidable { size: size })
         .with(Sprite {
             mesh_selection: MeshSelection::Asteroid,
             scale: Point2::new(size, size),
             ..Default::default()
         })
-        .with(plugins::health_damage::Health(100.0))
-        //.with(plugins::health_damage::DamageOnCollision(100.0))
+        .with(health_damage::Health(100.0))
+        //.with(health_damage::DamageOnCollision(100.0))
         .build();
 }

@@ -3,7 +3,7 @@ use specs::*;
 
 use resources::*;
 use components::*;
-use plugins;
+use plugins::*;
 
 pub fn init<'a, 'b>(
     world: &mut World,
@@ -42,7 +42,7 @@ pub struct DamageOnCollisionSystem;
 impl<'a> System<'a> for DamageOnCollisionSystem {
     type SystemData = (
         Entities<'a>,
-        Fetch<'a, plugins::collision::Collisions>,
+        Fetch<'a, collision::Collisions>,
         FetchMut<'a, DamageEventQueue>,
         ReadStorage<'a, DamageOnCollision>,
     );
@@ -69,7 +69,7 @@ impl<'a> System<'a> for HealthSystem {
         Entities<'a>,
         Fetch<'a, DeltaTime>,
         FetchMut<'a, DamageEventQueue>,
-        FetchMut<'a, plugins::despawn::DespawnEventQueue>,
+        FetchMut<'a, despawn::DespawnEventQueue>,
         WriteStorage<'a, Health>,
     );
 
@@ -86,7 +86,7 @@ impl<'a> System<'a> for HealthSystem {
             if health.0 <= 0.0 {
                 despawn_events
                     .0
-                    .push(plugins::despawn::DespawnEvent { entity: entity });
+                    .push(despawn::DespawnEvent { entity: entity });
             }
         }
     }

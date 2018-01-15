@@ -7,7 +7,7 @@ use ggez::graphics::{Point2, Rect, Vector2};
 use graphics::meshes::MeshSelection;
 use resources::*;
 use components::*;
-use plugins;
+use plugins::*;
 
 fn vec_from_angle(angle: f32) -> Vector2 {
     let vx = angle.sin();
@@ -269,9 +269,9 @@ impl<'a> System<'a> for GunSystem {
                     ..Default::default()
                 },
             );
-            lazy.insert(bullet, plugins::collision::Collidable { size: 50.0 });
-            lazy.insert(bullet, plugins::health_damage::DamageOnCollision(100.0));
-            lazy.insert(bullet, plugins::despawn::DespawnOnCollision);
+            lazy.insert(bullet, collision::Collidable { size: 50.0 });
+            lazy.insert(bullet, health_damage::DamageOnCollision(100.0));
+            lazy.insert(bullet, despawn::DespawnOnCollision);
             lazy.insert(
                 bullet,
                 Sprite {
