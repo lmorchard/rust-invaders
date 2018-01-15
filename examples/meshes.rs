@@ -12,7 +12,7 @@ use ggez::graphics::{DrawParam, Mesh, Point2};
 use std::f32;
 use std::f32::consts::PI;
 
-use invaders::plugins::sprites::{build_mesh, MeshSelection};
+use invaders::plugins::sprites::*;
 
 const SPACING: f32 = 150.0;
 const ROTATION_SPEED: f32 = PI / 150.0;
@@ -33,29 +33,29 @@ pub fn main() {
 
 struct MainState {
     rotation: f32,
-    mesh_selections: Vec<MeshSelection>,
+    shapes: Vec<Shape>,
     meshes: Vec<Option<Mesh>>,
 }
 
 impl MainState {
     fn new() -> GameResult<MainState> {
-        let mesh_selections = vec![
-            MeshSelection::Test,
-            MeshSelection::Player,
-            MeshSelection::SimpleBullet,
-            MeshSelection::Asteroid,
-            MeshSelection::Asteroid,
-            MeshSelection::Asteroid,
-            MeshSelection::Asteroid,
-            MeshSelection::Asteroid,
+        let shapes = vec![
+            Shape::Test,
+            Shape::Explosion,
+            Shape::Player,
+            Shape::SimpleBullet,
+            Shape::Asteroid,
+            Shape::Asteroid,
+            Shape::Asteroid,
+            Shape::Asteroid,
         ];
         let mut meshes = Vec::new();
-        for _idx in 0..mesh_selections.len() {
+        for _idx in 0..shapes.len() {
             meshes.push(None);
         }
         Ok(MainState {
             rotation: 0.0,
-            mesh_selections,
+            shapes,
             meshes,
         })
     }
@@ -74,7 +74,7 @@ impl event::EventHandler for MainState {
         let mut pos_y = 75.0;
 
         for idx in 0..self.meshes.len() {
-            let selection = &self.mesh_selections[idx];
+            let selection = &self.shapes[idx];
             let mesh =
                 &self.meshes[idx].get_or_insert_with(|| build_mesh(selection, ctx, 1.0 / 100.0));
             graphics::draw_ex(

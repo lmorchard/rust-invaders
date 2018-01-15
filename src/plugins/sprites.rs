@@ -87,6 +87,7 @@ pub enum Shape {
     Test,
     Player,
     Asteroid,
+    Explosion,
     SimpleBullet,
 }
 impl Default for Shape {
@@ -97,6 +98,7 @@ impl Default for Shape {
 
 pub fn build_mesh(shape: &Shape, ctx: &mut Context, line_width: f32) -> Mesh {
     match shape {
+        &Shape::Explosion => explosion(ctx, line_width),
         &Shape::Player => player(ctx, line_width),
         &Shape::Asteroid => asteroid(ctx, line_width),
         &Shape::SimpleBullet => simple_bullet(ctx, line_width),
@@ -128,6 +130,25 @@ pub fn test(ctx: &mut Context, line_width: f32) -> Mesh {
         .circle(DrawMode::Line(line_width), Point2::new(0.5, 0.5), 0.5, 0.05)
         .line(&points![(0.4, 0.5), (0.6, 0.5)], line_width)
         .line(&points![(0.5, 0.4), (0.5, 0.6)], line_width)
+        .build(ctx)
+        .unwrap()
+}
+
+pub fn explosion(ctx: &mut Context, line_width: f32) -> Mesh {
+    MeshBuilder::new()
+        .polygon(
+            DrawMode::Line(line_width),
+            &points![
+                (0.5, 0.0),
+                (0.55, 0.45),
+                (1.0, 0.5),
+                (0.55, 0.55),
+                (0.5, 1.0),
+                (0.45, 0.55),
+                (0.0, 0.5),
+                (0.45, 0.45)
+            ],
+        )
         .build(ctx)
         .unwrap()
 }
