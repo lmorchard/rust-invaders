@@ -13,6 +13,8 @@ You know what? I just don't really know, but it'll be a mess.
 
 - [ ] Switch ThrusterSet from string indexing to enum indexing?
 
+- [ ] Methods for adding events to damage & despawn event queues, rather than manipulating those vecs directly
+
 - [ ] Weapons
 
 - [ ] Baddies
