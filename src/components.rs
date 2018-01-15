@@ -87,11 +87,6 @@ impl Default for Sprite {
 }
 
 #[derive(Component, Debug)]
-pub struct Collidable {
-    pub size: f32,
-}
-
-#[derive(Component, Debug)]
 pub struct Gun {
     pub firing: bool,
     pub period: f32,

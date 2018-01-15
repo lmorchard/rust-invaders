@@ -69,7 +69,6 @@ impl<'a, 'b> MainState<'a, 'b> {
             fire: false,
             special: false,
         });
-        world.add_resource(Collisions::new());
 
         world.register::<Position>();
         world.register::<PositionBounds>();
@@ -82,7 +81,6 @@ impl<'a, 'b> MainState<'a, 'b> {
         world.register::<SpeedLimit>();
         world.register::<PlayerControl>();
         world.register::<Sprite>();
-        world.register::<Collidable>();
 
         let dispatcher = DispatcherBuilder::new()
             .add(MotionSystem, "motion", &[])
@@ -93,9 +91,9 @@ impl<'a, 'b> MainState<'a, 'b> {
             .add(PlayerControlSystem, "player_control", &[])
             .add(SpeedLimitSystem, "speed_limit", &[])
             .add(FrictionSystem, "friction", &[])
-            .add(CollisionSystem, "collision", &[])
             .add(GunSystem, "gun", &[]);
 
+        let dispatcher = plugins::collision::init(&mut world, dispatcher);
         let dispatcher = plugins::health_damage::init(&mut world, dispatcher);
 
         let dispatcher = dispatcher.build();
@@ -145,10 +143,9 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             let mut delta = self.world.write_resource::<DeltaTime>();
             *delta = DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
         }
-
-        plugins::health_damage::update(&mut self.world, ctx);
-
         self.dispatcher.dispatch(&mut self.world.res);
+        plugins::collision::update_after(&mut self.world, ctx);
+        plugins::health_damage::update_after(&mut self.world, ctx);
         self.world.maintain();
         Ok(())
     }
@@ -201,7 +198,8 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         //coords.y = self.coords.y + (5.0 - 10.0 * rand::random::<f32>());
         //graphics::set_screen_coordinates(ctx, coords).unwrap();
 
-        plugins::health_damage::draw(&mut self.world, ctx);
+        plugins::collision::draw_after(&mut self.world, ctx);
+        plugins::health_damage::draw_after(&mut self.world, ctx);
 
         graphics::present(ctx);
 
@@ -322,7 +320,7 @@ fn spawn_player(world: &mut World) {
             period: 0.25,
             ..Default::default()
         })
-        .with(Collidable { size: 50.0 })
+        .with(plugins::collision::Collidable { size: 50.0 })
         .with(Sprite {
             mesh_selection: MeshSelection::Player,
             scale: Point2::new(50.0, 50.0),
@@ -345,7 +343,7 @@ fn spawn_asteroid(world: &mut World) {
             r: PI * rand::random::<f32>(),
             ..Default::default()
         })
-        .with(Collidable { size: size })
+        .with(plugins::collision::Collidable { size: size })
         .with(Sprite {
             mesh_selection: MeshSelection::Asteroid,
             scale: Point2::new(size, size),

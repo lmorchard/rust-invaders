@@ -1,16 +1,15 @@
-use std::ops::{Deref, DerefMut};
-
 use ggez::*;
 use specs::*;
 
 use resources::*;
 use components::*;
+use plugins;
 
 pub fn init<'a, 'b>(
     world: &mut World,
     dispatcher: DispatcherBuilder<'a, 'b>,
 ) -> DispatcherBuilder<'a, 'b> {
-    world.add_resource(GameEventBuffer::new());
+    world.add_resource(DamageEventQueue::new());
     world.register::<Health>();
     world.register::<DamageOnCollision>();
     dispatcher
@@ -18,12 +17,12 @@ pub fn init<'a, 'b>(
         .add(HealthSystem, "health", &["damage_on_collision"])
 }
 
-pub fn update(world: &mut World, ctx: &mut Context) {
-    let mut events = world.write_resource::<GameEventBuffer>();
-    events.clear();
+pub fn update_after(world: &mut World, ctx: &mut Context) {
+    let mut events = world.write_resource::<DamageEventQueue>();
+    events.0.clear();
 }
 
-pub fn draw(world: &mut World, ctx: &mut Context) {}
+pub fn draw_after(world: &mut World, ctx: &mut Context) {}
 
 #[derive(Component, Debug)]
 pub struct Health(pub f32);
@@ -31,36 +30,18 @@ pub struct Health(pub f32);
 #[derive(Component, Debug)]
 pub struct DamageOnCollision(pub f32);
 
-pub trait GameEvent {
-    fn is_kind(&self, &str) -> bool;
-}
-
-pub struct GameEventBuffer(pub Vec<Box<GameEvent + Send + Sync>>);
-impl GameEventBuffer {
-    pub fn new() -> Self {
-        GameEventBuffer(Vec::new())
-    }
-}
-impl Deref for GameEventBuffer {
-    type Target = Vec<Box<GameEvent + Send + Sync>>;
-    fn deref(&self) -> &Vec<Box<GameEvent + Send + Sync>> {
-        &self.0
-    }
-}
-impl DerefMut for GameEventBuffer {
-    fn deref_mut(&mut self) -> &mut Vec<Box<GameEvent + Send + Sync>> {
-        &mut self.0
-    }
-}
-
 #[derive(Debug)]
 pub struct DamageEvent {
+    from: Entity,
     to: Entity,
     amount: f32,
 }
-impl GameEvent for DamageEvent {
-    fn is_kind(&self, want_kind: &str) -> bool {
-        want_kind == "damage"
+
+#[derive(Debug)]
+pub struct DamageEventQueue(pub Vec<DamageEvent>);
+impl DamageEventQueue {
+    pub fn new() -> DamageEventQueue {
+        DamageEventQueue(Vec::new())
     }
 }
 
@@ -68,31 +49,21 @@ pub struct DamageOnCollisionSystem;
 impl<'a> System<'a> for DamageOnCollisionSystem {
     type SystemData = (
         Entities<'a>,
-        Fetch<'a, DeltaTime>,
-        Fetch<'a, LazyUpdate>,
-        Fetch<'a, Collisions>,
-        FetchMut<'a, GameEventBuffer>,
-        ReadStorage<'a, Collidable>,
+        Fetch<'a, plugins::collision::Collisions>,
+        FetchMut<'a, DamageEventQueue>,
         ReadStorage<'a, DamageOnCollision>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, delta, lazy, collisions, mut events, collidables, damage_on_collisions) =
-            data;
-        let delta = delta.0;
-        for (ent, collidable, damage_on_collision) in
-            (&*entities, &collidables, &damage_on_collisions).join()
-        {
+        let (entities, collisions, mut damage_events, damages) = data;
+        for (ent, damage) in (&*entities, &damages).join() {
             if let Some(ref ent_collisions) = collisions.get(&ent) {
                 for other_ent in ent_collisions.iter() {
-                    events.push(Box::new(DamageEvent {
+                    damage_events.0.push(DamageEvent {
+                        from: ent.clone(),
                         to: other_ent.clone(),
-                        amount: damage_on_collision.0,
-                    }));
-                    println!(
-                        "ENT {:?} DAMAGES {:?} FOR {:?}",
-                        ent, other_ent, damage_on_collision.0
-                    );
+                        amount: damage.0,
+                    });
                 }
             }
         }
@@ -104,14 +75,22 @@ impl<'a> System<'a> for HealthSystem {
     type SystemData = (
         Entities<'a>,
         Fetch<'a, DeltaTime>,
-        Fetch<'a, LazyUpdate>,
-        FetchMut<'a, GameEventBuffer>,
-        ReadStorage<'a, Health>,
+        FetchMut<'a, DamageEventQueue>,
+        WriteStorage<'a, Health>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, delta, lazy, mut events, healths) = data;
+        let (entities, delta, damage_events, mut healths) = data;
         let delta = delta.0;
-        for (ent, health) in (&*entities, &healths).join() {}
+        for damage_event in &damage_events.0 {
+            if let Some(ref mut health) = healths.get_mut(damage_event.to) {
+                health.0 -= damage_event.amount;
+            }
+        }
+        for (entity, health) in (&*entities, &mut healths).join() {
+            if health.0 <= 0.0 {
+                entities.delete(entity).unwrap();
+            }
+        }
     }
 }
