@@ -143,6 +143,10 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             *delta = DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
         }
 
+        if rand::random::<f32>() < 0.05 {
+            spawn_asteroid(&mut self.world);
+        }
+
         self.dispatcher.dispatch(&mut self.world.res);
 
         // collision::update_after(&mut self.world, ctx);
@@ -321,6 +325,8 @@ fn spawn_player(world: &mut World) {
             ..Default::default()
         })
         .with(collision::Collidable { size: 50.0 })
+        //.with(health_damage::Health(100.0))
+        //.with(health_damage::DamageOnCollision(100.0))
         .with(Sprite {
             mesh_selection: MeshSelection::Player,
             scale: Point2::new(50.0, 50.0),
@@ -336,10 +342,11 @@ fn spawn_asteroid(world: &mut World) {
         .create_entity()
         .with(Position {
             x: (PLAYFIELD_WIDTH / 2.0) - PLAYFIELD_WIDTH * rand::random::<f32>(),
-            y: 200.0 - 600.0 * rand::random::<f32>(),
+            y: 0.0 - (PLAYFIELD_HEIGHT / 2.0) + (PLAYFIELD_HEIGHT / 3.0) * rand::random::<f32>(),
             ..Default::default()
         })
         .with(Velocity {
+            y: 75.0 * rand::random::<f32>(),
             r: PI * rand::random::<f32>(),
             ..Default::default()
         })
@@ -349,6 +356,7 @@ fn spawn_asteroid(world: &mut World) {
             scale: Point2::new(size, size),
             ..Default::default()
         })
+        .with(despawn::DespawnBounds(Rect::new(-800.0, -450.0, 1600.0, 900.0)))
         .with(health_damage::Health(100.0))
         .with(health_damage::DamageOnCollision(100.0))
         .build();
