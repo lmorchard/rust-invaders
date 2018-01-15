@@ -8,6 +8,10 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
+- [ ] Spawn explosions / tombstones on entity despawn
+
+- [ ] Animated sprite meshes
+
 - [ ] Reorganize things into component/system/resource/etc plugin bundles?
     - [ ] Collect sprite stuff into its own rendering plugin
 
@@ -18,6 +22,12 @@ You know what? I just don't really know, but it'll be a mess.
 - [ ] Weapons
 
 - [ ] Baddies
+
+- [ ] Goals - score?
+
+- [ ] Player death
+
+- [ ] Levels / level restart on death
 
 - [ ] Proportional throttle control tied to controller joystick axes
 
@@ -30,3 +40,7 @@ You know what? I just don't really know, but it'll be a mess.
 - [ ] Settings menu - resolution, keybindings, etc
 
 - [ ] Index Position components in a quadtree for collision queries & etc
+
+- [ ] Figure out how to build & distribute binaries of this thing
+
+- [ ] Get this thing working in a browser with WASM someday
