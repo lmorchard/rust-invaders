@@ -6,14 +6,12 @@ extern crate specs;
 use std::f32::consts::PI;
 
 use ggez::*;
-use ggez::graphics::{DrawParam, Point2};
+use ggez::graphics::*;
 
-use specs::{Dispatcher, DispatcherBuilder, Join, World};
+use specs::*;
 
-use invaders::graphics::meshes;
-use invaders::components::*;
-use invaders::systems::*;
-use invaders::resources::*;
+use invaders::*;
+use invaders::plugins::*;
 
 pub fn main() {
     let mut c = conf::Conf::new();
@@ -27,6 +25,8 @@ pub fn main() {
     graphics::set_background_color(ctx, (0, 0, 0, 255).into());
 
     let state = &mut MainState::new(ctx).unwrap();
+    let (width, height) = graphics::get_size(ctx);
+    update_screen_coordinates(ctx, 1.0, width, height);
     event::run(ctx, state).unwrap();
 }
 
@@ -39,56 +39,23 @@ impl<'a, 'b> MainState<'a, 'b> {
     fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
         let mut world = World::new();
 
-        world.add_resource(DeltaTime(0.016));
-        world.register::<Position>();
-        world.register::<Velocity>();
-        world.register::<Sprite>();
+        let dispatcher = DispatcherBuilder::new();
+        let dispatcher = init(&mut world, dispatcher);
+        let dispatcher = position_motion::init(&mut world, dispatcher);
+        let dispatcher = sprites::init(&mut world, dispatcher);
+        let dispatcher = dispatcher.build();
 
         for _idx in 0..25 {
             spawn(ctx, &mut world);
         }
 
-        let dispatcher = DispatcherBuilder::new()
-            .add(MotionSystem, "motion", &[])
-            .build();
-
         Ok(MainState { world, dispatcher })
     }
 }
 
-fn spawn(ctx: &mut Context, world: &mut World) {
-    let scale = 50.0 + (50.0 * rand::random::<f32>());
-    world
-        .create_entity()
-        .with(Position {
-            x: 800.0 * rand::random::<f32>(),
-            y: 600.0 * rand::random::<f32>(),
-            r: PI * rand::random::<f32>(),
-        })
-        .with(Velocity {
-            x: 100.0 - 200.0 * rand::random::<f32>(),
-            y: 100.0 - 200.0 * rand::random::<f32>(),
-            r: (PI * 0.5) - PI * rand::random::<f32>(),
-        })
-        .with(Sprite {
-            mesh: if rand::random::<f32>() > 0.5 {
-                meshes::player(ctx, 1.0 / scale)
-            } else {
-                meshes::asteroid(ctx, 1.0 / scale)
-            },
-            offset: Point2::new(0.5, 0.5),
-            scale: Point2::new(scale, scale),
-        })
-        .build();
-}
-
 impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        {
-            let dt = ggez::timer::get_delta(ctx);
-            let mut delta = self.world.write_resource::<DeltaTime>();
-            *delta = DeltaTime(dt.as_secs() as f32 + dt.subsec_nanos() as f32 * 1e-9);
-        }
+        update_delta_time(&mut self.world, ctx);
 
         self.dispatcher.dispatch(&mut self.world.res);
 
@@ -101,26 +68,39 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx);
-
-        let entities = self.world.entities();
-        let positions = self.world.read::<Position>();
-        let sprites = self.world.read::<Sprite>();
-
-        for (_ent, pos, spr) in (&*entities, &positions, &sprites).join() {
-            graphics::draw_ex(
-                ctx,
-                &spr.mesh,
-                DrawParam {
-                    dest: Point2::new(pos.x, pos.y),
-                    rotation: pos.r,
-                    offset: spr.offset,
-                    scale: spr.scale,
-                    ..Default::default()
-                },
-            )?;
-        }
-
+        sprites::draw(&mut self.world, ctx)?;
         graphics::present(ctx);
         Ok(())
     }
+
+    fn resize_event(&mut self, ctx: &mut Context, width: u32, height: u32) {
+        update_screen_coordinates(ctx, 1.0, width, height);
+    }
+}
+
+fn spawn(ctx: &mut Context, world: &mut World) {
+    let scale = 50.0 + (50.0 * rand::random::<f32>());
+    world
+        .create_entity()
+        .with(position_motion::Position {
+            x: PLAYFIELD_WIDTH * rand::random::<f32>() - (PLAYFIELD_WIDTH / 2.0),
+            y: PLAYFIELD_HEIGHT * rand::random::<f32>() - (PLAYFIELD_HEIGHT / 2.0),
+            r: PI * rand::random::<f32>(),
+        })
+        .with(position_motion::Velocity {
+            x: 100.0 - 200.0 * rand::random::<f32>(),
+            y: 100.0 - 200.0 * rand::random::<f32>(),
+            r: (PI * 0.5) - PI * rand::random::<f32>(),
+        })
+        .with(sprites::Sprite {
+            mesh_selection: if rand::random::<f32>() > 0.5 {
+                sprites::MeshSelection::Player
+            } else {
+                sprites::MeshSelection::Asteroid
+            },
+            offset: Point2::new(0.5, 0.5),
+            scale: Point2::new(scale, scale),
+            ..Default::default()
+        })
+        .build();
 }

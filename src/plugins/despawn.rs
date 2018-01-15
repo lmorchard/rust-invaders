@@ -1,7 +1,5 @@
 use ggez::graphics::*;
 use specs::*;
-
-use components::*;
 use plugins::*;
 
 pub fn init<'a, 'b>(
@@ -38,7 +36,7 @@ pub struct DespawnBoundsSystem;
 impl<'a> System<'a> for DespawnBoundsSystem {
     type SystemData = (
         Entities<'a>,
-        ReadStorage<'a, Position>,
+        ReadStorage<'a, position_motion::Position>,
         ReadStorage<'a, DespawnBounds>,
     );
 

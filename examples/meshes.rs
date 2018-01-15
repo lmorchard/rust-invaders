@@ -12,7 +12,7 @@ use ggez::graphics::{DrawParam, Mesh, Point2};
 use std::f32;
 use std::f32::consts::PI;
 
-use invaders::graphics::meshes::{build_mesh, MeshSelection};
+use invaders::plugins::sprites::{build_mesh, MeshSelection};
 
 const SPACING: f32 = 150.0;
 const ROTATION_SPEED: f32 = PI / 150.0;

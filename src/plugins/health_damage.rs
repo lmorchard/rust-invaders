@@ -1,5 +1,4 @@
 use specs::*;
-
 use plugins::*;
 
 pub fn init<'a, 'b>(

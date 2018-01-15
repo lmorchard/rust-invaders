@@ -1,9 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
-
 use specs::*;
-
-use components::*;
+use plugins::*;
 
 pub fn init<'a, 'b>(
     world: &mut World,
@@ -52,7 +50,7 @@ impl<'a> System<'a> for CollisionSystem {
     type SystemData = (
         Entities<'a>,
         FetchMut<'a, Collisions>,
-        ReadStorage<'a, Position>,
+        ReadStorage<'a, position_motion::Position>,
         ReadStorage<'a, Collidable>,
     );
 

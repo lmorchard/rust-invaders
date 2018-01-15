@@ -1,11 +1,64 @@
-extern crate rand;
-
 use std::f32::consts::PI;
-
+use specs::*;
 use ggez::*;
-use ggez::graphics::{DrawMode, Mesh, MeshBuilder, Point2};
-
+use ggez::graphics::{DrawParam, DrawMode, Mesh, MeshBuilder, Point2};
+use rand;
 use rand::Rng;
+
+use plugins::*;
+
+pub fn init<'a, 'b>(
+    world: &mut World,
+    dispatcher: DispatcherBuilder<'a, 'b>,
+) -> DispatcherBuilder<'a, 'b> {
+    world.register::<Sprite>();
+    dispatcher
+}
+
+pub fn draw(world: &mut World, ctx: &mut Context) -> GameResult<()> {
+    let entities = world.entities();
+    let positions = world.read::<position_motion::Position>();
+    let mut sprites = world.write::<sprites::Sprite>();
+
+    // TODO: cache these per-sprite component! stateful asteroids
+    for (_ent, pos, spr) in (&*entities, &positions, &mut sprites).join() {
+        let selection = &spr.mesh_selection;
+        let line_width = 1.0 / spr.scale.x;
+        let mesh = &spr.mesh
+            .get_or_insert_with(|| sprites::build_mesh(selection, ctx, line_width));
+        graphics::draw_ex(
+            ctx,
+            *mesh,
+            DrawParam {
+                dest: Point2::new(pos.x, pos.y),
+                rotation: pos.r,
+                offset: spr.offset,
+                scale: spr.scale,
+                ..Default::default()
+            },
+        )?;
+    }
+
+    Ok(())
+}
+
+#[derive(Component, Debug)]
+pub struct Sprite {
+    pub scale: Point2,
+    pub offset: Point2,
+    pub mesh_selection: MeshSelection,
+    pub mesh: Option<Mesh>,
+}
+impl Default for Sprite {
+    fn default() -> Sprite {
+        Sprite {
+            scale: Point2::new(100.0, 100.0),
+            offset: Point2::new(0.5, 0.5),
+            mesh_selection: MeshSelection::Test,
+            mesh: None,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub enum MeshSelection {

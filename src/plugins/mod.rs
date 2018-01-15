@@ -1,3 +1,9 @@
 pub mod collision;
 pub mod health_damage;
 pub mod despawn;
+pub mod position_motion;
+pub mod sprites;
+pub mod simple_physics;
+pub mod thruster;
+pub mod guns;
+pub mod player_control;
