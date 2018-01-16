@@ -46,15 +46,15 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         let dispatcher = DispatcherBuilder::new();
         let dispatcher = init(&mut world, dispatcher);
-        let dispatcher = position_motion::init(&mut world, dispatcher);
-        let dispatcher = simple_physics::init(&mut world, dispatcher);
         let dispatcher = guns::init(&mut world, dispatcher);
         let dispatcher = thruster::init(&mut world, dispatcher);
         let dispatcher = collision::init(&mut world, dispatcher);
         let dispatcher = health_damage::init(&mut world, dispatcher);
-        let dispatcher = despawn::init(&mut world, dispatcher);
-        let dispatcher = sprites::init(&mut world, dispatcher);
         let dispatcher = player_control::init(&mut world, dispatcher);
+        let dispatcher = simple_physics::init(&mut world, dispatcher);
+        let dispatcher = position_motion::init(&mut world, dispatcher);
+        let dispatcher = sprites::init(&mut world, dispatcher);
+        let dispatcher = despawn::init(&mut world, dispatcher);
         let dispatcher = dispatcher.build();
 
         spawn_player(&mut world);
@@ -89,9 +89,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::set_background_color(ctx, graphics::BLACK);
         graphics::clear(ctx);
-
         graphics::set_color(ctx, graphics::WHITE)?;
-
         graphics::rectangle(
             ctx,
             DrawMode::Line(1.0),
@@ -105,14 +103,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
 
         sprites::draw(&mut self.world, ctx)?;
 
-        // Hacky screen shake (for future reference):
-        //let mut coords = graphics::get_screen_coordinates(ctx);
-        //coords.x = self.coords.x + (5.0 - 10.0 * rand::random::<f32>());
-        //coords.y = self.coords.y + (5.0 - 10.0 * rand::random::<f32>());
-        //graphics::set_screen_coordinates(ctx, coords).unwrap();
-
         graphics::present(ctx);
-
         Ok(())
     }
 
@@ -228,6 +219,6 @@ fn spawn_asteroid(world: &mut World) {
             900.0,
         )))
         .with(health_damage::Health(100.0))
-        .with(health_damage::DamageOnCollision(100.0))
+        .with(despawn::Tombstone)
         .build();
 }

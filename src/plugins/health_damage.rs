@@ -17,13 +17,26 @@ pub fn init<'a, 'b>(
 pub struct Health(pub f32);
 
 #[derive(Component, Debug)]
-pub struct DamageOnCollision(pub f32);
+pub struct DamageOnCollision {
+    pub damage: f32,
+    pub despawn: bool,
+    pub exclude: Vec<Entity>,
+}
+impl Default for DamageOnCollision {
+    fn default() -> DamageOnCollision {
+        DamageOnCollision {
+            damage: 0.0,
+            despawn: true,
+            exclude: Vec::new(),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct DamageEvent {
-    from: Entity,
-    to: Entity,
-    amount: f32,
+    pub from: Entity,
+    pub to: Entity,
+    pub amount: f32,
 }
 
 #[derive(Debug)]
@@ -40,20 +53,27 @@ impl<'a> System<'a> for DamageOnCollisionSystem {
         Entities<'a>,
         Fetch<'a, collision::Collisions>,
         FetchMut<'a, DamageEventQueue>,
+        FetchMut<'a, despawn::DespawnEventQueue>,
         ReadStorage<'a, DamageOnCollision>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, collisions, mut damage_events, damages) = data;
+        let (entities, collisions, mut damage_events, mut despawn_events, damages) = data;
         // TODO: Set a timer to only send damage once every so often, rather than for every frame
         // entities are in collision
         for (ent, damage) in (&*entities, &damages).join() {
             if let Some(ref ent_collisions) = collisions.get(&ent) {
                 for other_ent in ent_collisions.iter() {
+                    if damage.exclude.contains(&other_ent) {
+                        continue;
+                    }
+                    if damage.despawn {
+                        despawn_events.0.push(despawn::DespawnEvent { entity: ent });
+                    }
                     damage_events.0.push(DamageEvent {
                         from: ent.clone(),
                         to: other_ent.clone(),
-                        amount: damage.0,
+                        amount: damage.damage,
                     });
                 }
             }

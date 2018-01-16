@@ -41,7 +41,7 @@ impl<'a> System<'a> for GunSystem {
     fn run(&mut self, data: Self::SystemData) {
         let (entities, delta, lazy, positions, mut guns) = data;
         let delta = delta.0;
-        for (position, gun) in (&positions, &mut guns).join() {
+        for (entity, position, gun) in (&*entities, &positions, &mut guns).join() {
             if gun.cooldown > 0.0 {
                 gun.cooldown -= delta;
                 continue;
@@ -56,7 +56,7 @@ impl<'a> System<'a> for GunSystem {
                 bullet,
                 position_motion::Position {
                     x: position.x,
-                    y: position.y - 50.0,
+                    y: position.y - 30.0,
                     ..Default::default()
                 },
             );
@@ -68,8 +68,14 @@ impl<'a> System<'a> for GunSystem {
                 },
             );
             lazy.insert(bullet, collision::Collidable { size: 50.0 });
-            lazy.insert(bullet, health_damage::DamageOnCollision(100.0));
-            lazy.insert(bullet, despawn::DespawnOnCollision);
+            lazy.insert(
+                bullet,
+                health_damage::DamageOnCollision {
+                    damage: 100.0,
+                    exclude: vec![entity],
+                    ..Default::default()
+                },
+            );
             lazy.insert(
                 bullet,
                 despawn::DespawnBounds(Rect::new(-800.0, -450.0, 1600.0, 900.0)),
