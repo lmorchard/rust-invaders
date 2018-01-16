@@ -64,6 +64,8 @@ impl<'a> System<'a> for DamageOnCollisionSystem {
         for (ent, damage) in (&*entities, &damages).join() {
             if let Some(ref ent_collisions) = collisions.get(&ent) {
                 for other_ent in ent_collisions.iter() {
+                    // TODO: Find a better way to identify exclusions - we won't always know
+                    // literal entities. Maybe use some sort of marker component
                     if damage.exclude.contains(&other_ent) {
                         continue;
                     }

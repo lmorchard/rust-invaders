@@ -181,8 +181,6 @@ fn spawn_player(world: &mut World) {
             ..Default::default()
         })
         .with(collision::Collidable { size: 50.0 })
-        //.with(health_damage::Health(100.0))
-        //.with(health_damage::DamageOnCollision(100.0))
         .with(sprites::Sprite {
             shape: sprites::Shape::Player,
             scale: Point2::new(50.0, 50.0),
@@ -218,6 +216,10 @@ fn spawn_asteroid(world: &mut World) {
             1600.0,
             900.0,
         )))
+        .with(health_damage::DamageOnCollision {
+            damage: 100.0,
+            ..Default::default()
+        })
         .with(health_damage::Health(100.0))
         .with(despawn::Tombstone)
         .build();

@@ -8,13 +8,18 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
-- [ ] Spawn explosions / tombstones on entity despawn
+- [ ] Black out area of screen outside playfield?
+
+- [ ] Implement elastic collisions so asteroids bounce
 
 - [ ] Animated sprite meshes
 
 - [ ] Switch ThrusterSet from string indexing to enum indexing?
 
-- [ ] Methods for adding events to damage & despawn event queues, rather than manipulating those vecs directly
+- [ ] Methods for adding events to damage & despawn event queues, rather than
+      manipulating those vecs directly
+
+- [ ] Game HUD - score, shields, planet health, etc
 
 - [ ] Weapons
 
