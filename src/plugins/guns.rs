@@ -56,7 +56,7 @@ impl<'a> System<'a> for GunSystem {
                 bullet,
                 position_motion::Position {
                     x: position.x,
-                    y: position.y - 30.0,
+                    y: position.y - 50.0,
                     ..Default::default()
                 },
             );

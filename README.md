@@ -10,7 +10,7 @@ You know what? I just don't really know, but it'll be a mess.
 
 - [ ] Black out area of screen outside playfield?
 
-- [ ] Implement elastic collisions so asteroids bounce
+- [ ] Implement elastic collisions so asteroids bounce - http://en.m.wikipedia.org/wiki/Elastic_collision
 
 - [ ] Animated sprite meshes
 
