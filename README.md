@@ -10,7 +10,8 @@ You know what? I just don't really know, but it'll be a mess.
 
 - [ ] Black out area of screen outside playfield?
 
-- [ ] Implement elastic collisions so asteroids bounce - http://en.m.wikipedia.org/wiki/Elastic_collision
+- [ ] Implement elastic collisions so asteroids bounce -
+        http://en.m.wikipedia.org/wiki/Elastic_collision
 
 - [ ] Animated sprite meshes
 
@@ -19,6 +20,8 @@ You know what? I just don't really know, but it'll be a mess.
 - [ ] Methods for adding events to damage & despawn event queues, rather than
       manipulating those vecs directly
 
+- [ ] Debug HUD - easy way to monitor some variables, offer some switches & knobs
+
 - [ ] Game HUD - score, shields, planet health, etc
 
 - [ ] Weapons
@@ -26,6 +29,9 @@ You know what? I just don't really know, but it'll be a mess.
 - [ ] Baddies
 
 - [ ] Goals - score?
+    - [ ] Planet limb below, has health & takes damage from asteroids, don't let it die
+    - [ ] Survive time limit?
+    - [ ] High score?
 
 - [ ] Player death
 
