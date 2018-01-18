@@ -1,4 +1,5 @@
 pub mod collision;
+pub mod bounce;
 pub mod health_damage;
 pub mod despawn;
 pub mod position_motion;

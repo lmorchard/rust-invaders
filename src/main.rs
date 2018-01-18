@@ -49,6 +49,7 @@ impl<'a, 'b> MainState<'a, 'b> {
         let dispatcher = guns::init(&mut world, dispatcher);
         let dispatcher = thruster::init(&mut world, dispatcher);
         let dispatcher = collision::init(&mut world, dispatcher);
+        let dispatcher = bounce::init(&mut world, dispatcher);
         let dispatcher = health_damage::init(&mut world, dispatcher);
         let dispatcher = player_control::init(&mut world, dispatcher);
         let dispatcher = simple_physics::init(&mut world, dispatcher);
@@ -59,7 +60,7 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         spawn_player(&mut world);
 
-        for _idx in 0..20 {
+        for _idx in 0..10 {
             spawn_asteroid(&mut world);
         }
 
@@ -190,21 +191,28 @@ fn spawn_player(world: &mut World) {
         .build();
 }
 
+const HW: f32 = PLAYFIELD_WIDTH / 2.0;
+const HH: f32 = PLAYFIELD_HEIGHT / 2.0;
+
 fn spawn_asteroid(world: &mut World) {
     let size = 25.0 + 150.0 * rand::random::<f32>();
     world
         .create_entity()
         .with(position_motion::Position {
-            x: (PLAYFIELD_WIDTH / 2.0) - PLAYFIELD_WIDTH * rand::random::<f32>(),
-            y: 0.0 - (PLAYFIELD_HEIGHT / 2.0) + (PLAYFIELD_HEIGHT / 3.0) * rand::random::<f32>(),
+            x: 0.0 - HW + (PLAYFIELD_WIDTH / 8.0) * (rand::random::<f32>() * 8.0),
+            y: 0.0 - HH + 50.0 * rand::random::<f32>(),
             ..Default::default()
         })
         .with(position_motion::Velocity {
-            y: 75.0 * rand::random::<f32>(),
+            x: 50.0 - 100.0 * rand::random::<f32>(),
+            y: 50.0 + 50.0 * rand::random::<f32>(),
             r: PI * rand::random::<f32>(),
             ..Default::default()
         })
         .with(collision::Collidable { size: size })
+        .with(bounce::BounceOnCollision {
+            ..Default::default()
+        })
         .with(sprites::Sprite {
             shape: sprites::Shape::Asteroid,
             scale: Point2::new(size, size),
@@ -216,10 +224,10 @@ fn spawn_asteroid(world: &mut World) {
             1600.0,
             900.0,
         )))
-        .with(health_damage::DamageOnCollision {
-            damage: 100.0,
-            ..Default::default()
-        })
+        //.with(health_damage::DamageOnCollision {
+        //    damage: 100.0,
+        //    ..Default::default()
+        //})
         .with(health_damage::Health(100.0))
         .with(despawn::Tombstone)
         .build();

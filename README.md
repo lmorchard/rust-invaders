@@ -8,10 +8,11 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
-- [ ] Black out area of screen outside playfield?
+- [ ] Don't spawn overlapping asteroids, look for empty space when spawning
 
-- [ ] Implement elastic collisions so asteroids bounce -
-        http://en.m.wikipedia.org/wiki/Elastic_collision
+- [ ] Implement additional tombstone types - i.e. big asteroid becomes 2 smaller ones
+
+- [ ] Black out area of screen outside playfield?
 
 - [ ] Animated sprite meshes
 
