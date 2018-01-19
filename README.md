@@ -8,9 +8,10 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
-- [ ] Don't spawn overlapping asteroids, look for empty space when spawning
-
 - [ ] Implement additional tombstone types - i.e. big asteroid becomes 2 smaller ones
+
+- [ ] Implement despawn reasons and different tombstones (or lack thereof) based on reason
+    - [ ] Asteroids should explode when shot, but just vanish when off playfield
 
 - [ ] Black out area of screen outside playfield?
 
