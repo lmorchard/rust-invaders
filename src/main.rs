@@ -178,7 +178,7 @@ fn spawn_player(world: &mut World) {
             },
         }))
         .with(guns::Gun {
-            period: 0.25,
+            period: 0.3,
             ..Default::default()
         })
         .with(collision::Collidable { size: 50.0 })

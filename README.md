@@ -8,6 +8,8 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
+- [ ] Run clippy and take its advice
+
 - [ ] Implement additional tombstone types - i.e. big asteroid becomes 2 smaller ones
 
 - [ ] Implement despawn reasons and different tombstones (or lack thereof) based on reason
