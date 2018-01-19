@@ -77,7 +77,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         update_delta_time(&mut self.world, ctx);
 
-        if rand::random::<f32>() < 0.05 {
+        if rand::random::<f32>() < 0.1 {
             spawn_asteroid(&mut self.world);
         }
 
@@ -195,9 +195,9 @@ const HW: f32 = PLAYFIELD_WIDTH / 2.0;
 const HH: f32 = PLAYFIELD_HEIGHT / 2.0;
 
 fn spawn_asteroid(world: &mut World) {
-    let x = 0.0 - HW + (PLAYFIELD_WIDTH / 8.0) * (rand::random::<f32>() * 8.0);
-    let y = 0.0 - HH + 50.0 * rand::random::<f32>();
     let size = 25.0 + 150.0 * rand::random::<f32>();
+    let x = 0.0 - HW + (PLAYFIELD_WIDTH / 8.0) * (rand::random::<f32>() * 8.0);
+    let y = 0.0 - HH - size;
 
     if !collision::is_empty_at(&world, x, y, size) {
         return;
@@ -222,10 +222,10 @@ fn spawn_asteroid(world: &mut World) {
             ..Default::default()
         })
         .with(despawn::DespawnBounds(Rect::new(
-            -800.0,
-            -450.0,
-            1600.0,
-            900.0,
+            0.0 - HW,
+            0.0 - HH - 200.0,
+            PLAYFIELD_WIDTH,
+            PLAYFIELD_HEIGHT + 400.0,
         )))
         //.with(health_damage::DamageOnCollision {
         //    damage: 100.0,
