@@ -74,3 +74,19 @@ impl<'a> System<'a> for CollisionSystem {
         }
     }
 }
+
+pub fn is_empty_at(world: &World, x: f32, y: f32, size: f32) -> bool {
+    let positions = world.read::<position_motion::Position>();
+    let collidables = world.read::<Collidable>();
+
+    // TODO: optimize this with quadtree index
+    for (other_pos, other_col) in (&positions, &collidables).join() {
+        // TODO: DRY this out with collision detection in CollisionSystem
+        let overlap_range = ((size / 2.0) + (other_col.size / 2.0)).powf(2.0);
+        let distance_sq = (other_pos.x - x).powf(2.0) + (other_pos.y - y).powf(2.0);
+        if distance_sq <= overlap_range {
+            return false;
+        }
+    }
+    true
+}

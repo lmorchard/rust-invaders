@@ -102,6 +102,11 @@ fn spawn_asteroid(world: &mut World) {
     let y = (0.0 - HH) + (PLAYFIELD_HEIGHT / 12.0) * (rand::random::<f32>() * 12.0);
 
     let size = 25.0 + 150.0 * rand::random::<f32>();
+
+    if !collision::is_empty_at(&world, x, y, size) {
+        return;
+    }
+
     world
         .create_entity()
         .with(position_motion::Position {

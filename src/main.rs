@@ -195,17 +195,20 @@ const HW: f32 = PLAYFIELD_WIDTH / 2.0;
 const HH: f32 = PLAYFIELD_HEIGHT / 2.0;
 
 fn spawn_asteroid(world: &mut World) {
+    let x = 0.0 - HW + (PLAYFIELD_WIDTH / 8.0) * (rand::random::<f32>() * 8.0);
+    let y = 0.0 - HH + 50.0 * rand::random::<f32>();
     let size = 25.0 + 150.0 * rand::random::<f32>();
+
+    if !collision::is_empty_at(&world, x, y, size) {
+        return;
+    }
+
     world
         .create_entity()
-        .with(position_motion::Position {
-            x: 0.0 - HW + (PLAYFIELD_WIDTH / 8.0) * (rand::random::<f32>() * 8.0),
-            y: 0.0 - HH + 50.0 * rand::random::<f32>(),
-            ..Default::default()
-        })
+        .with(position_motion::Position { x: x, y: y, ..Default::default() })
         .with(position_motion::Velocity {
             x: 50.0 - 100.0 * rand::random::<f32>(),
-            y: 50.0 + 50.0 * rand::random::<f32>(),
+            y: 50.0 + 100.0 * rand::random::<f32>(),
             r: PI * rand::random::<f32>(),
             ..Default::default()
         })

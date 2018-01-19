@@ -37,6 +37,7 @@ impl<'a> System<'a> for BounceOnCollisionSystem {
         for (a_entity, a_collidable, a_bounce) in (&*entities, &cols, &bounces).join() {
             if let Some(ref ent_collisions) = collisions.get(&a_entity) {
                 for b_entity in ent_collisions.iter() {
+                    // TODO: rework this code a bit with some more match / if let action?
                     let result;
                     {
                         let a_position = positions.get(a_entity);
