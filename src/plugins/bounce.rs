@@ -64,8 +64,7 @@ impl<'a> System<'a> for BounceOnCollisionSystem {
                             b_velocity.unwrap(),
                         );
                     }
-                    if result.is_some() {
-                        let (ax, ay, bx, by) = result.unwrap();
+                    if let Some((ax, ay, bx, by)) = result {
                         {
                             let mut a_velocity = vels.get_mut(a_entity).unwrap();
                             a_velocity.x = ax;

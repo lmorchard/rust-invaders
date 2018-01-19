@@ -93,11 +93,11 @@ fn spawn_asteroid(world: &mut World) {
     let x;
     let xv;
     if rand::random::<f32>() > 0.5 {
-        x = (0.0 - HW + 100.0);
+        x = 0.0 - HW + 100.0;
         xv = 200.0 + rand::random::<f32>() * 500.0;
     } else {
         x = HW - 100.0;
-        xv = 200.0 - rand::random::<f32>() * 500.0;
+        xv = 0.0 - 200.0 - rand::random::<f32>() * 500.0;
     }
     let y = (0.0 - HH) + (PLAYFIELD_HEIGHT / 12.0) * (rand::random::<f32>() * 12.0);
 
