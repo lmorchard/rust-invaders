@@ -16,15 +16,20 @@ pub fn init<'a, 'b>(
 pub struct Collisions(pub HashMap<Entity, HashSet<Entity>>);
 impl Collisions {
     pub fn new() -> Self {
-        Collisions(HashMap::new())
+        Default::default()
     }
     pub fn insert(&mut self, e1: Entity, e2: Entity) {
-        self.0.entry(e1).or_insert(HashSet::new()).insert(e2);
-        self.0.entry(e2).or_insert(HashSet::new()).insert(e1);
+        self.0.entry(e1).or_insert_with(HashSet::new).insert(e2);
+        self.0.entry(e2).or_insert_with(HashSet::new).insert(e1);
     }
     pub fn remove(&mut self, e1: Entity, e2: Entity) {
-        self.0.entry(e1).or_insert(HashSet::new()).remove(&e2);
-        self.0.entry(e2).or_insert(HashSet::new()).remove(&e1);
+        self.0.entry(e1).or_insert_with(HashSet::new).remove(&e2);
+        self.0.entry(e2).or_insert_with(HashSet::new).remove(&e1);
+    }
+}
+impl Default for Collisions {
+    fn default() -> Collisions {
+        Collisions(HashMap::new())
     }
 }
 impl Deref for Collisions {

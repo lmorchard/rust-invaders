@@ -81,7 +81,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
             spawn_asteroid(&mut self.world);
         }
 
-        self.dispatcher.dispatch(&mut self.world.res);
+        self.dispatcher.dispatch(&self.world.res);
 
         self.world.maintain();
         Ok(())
@@ -199,20 +199,19 @@ fn spawn_asteroid(world: &mut World) {
     let x = 0.0 - HW + (PLAYFIELD_WIDTH / 8.0) * (rand::random::<f32>() * 8.0);
     let y = 0.0 - HH - size;
 
-    if !collision::is_empty_at(&world, x, y, size) {
+    if !collision::is_empty_at(world, x, y, size) {
         return;
     }
 
     world
         .create_entity()
-        .with(position_motion::Position { x: x, y: y, ..Default::default() })
+        .with(position_motion::Position { x, y, ..Default::default() })
         .with(position_motion::Velocity {
             x: 50.0 - 100.0 * rand::random::<f32>(),
             y: 50.0 + 100.0 * rand::random::<f32>(),
-            r: PI * rand::random::<f32>(),
-            ..Default::default()
+            r: PI * rand::random::<f32>()
         })
-        .with(collision::Collidable { size: size })
+        .with(collision::Collidable { size })
         .with(bounce::BounceOnCollision {
             ..Default::default()
         })

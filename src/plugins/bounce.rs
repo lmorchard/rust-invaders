@@ -25,42 +25,38 @@ impl<'a> System<'a> for BounceOnCollisionSystem {
         Entities<'a>,
         Fetch<'a, collision::Collisions>,
         FetchMut<'a, health_damage::DamageEventQueue>,
-        ReadStorage<'a, collision::Collidable>,
         ReadStorage<'a, BounceOnCollision>,
         WriteStorage<'a, position_motion::Position>,
         WriteStorage<'a, position_motion::Velocity>,
     );
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, collisions, mut damage, cols, bounces, mut positions, mut vels) = data;
+        let (entities, collisions, mut _damage, bounces, positions, mut vels) = data;
 
         // TODO: Track seen entity pairs, skip those already processed
-        for (a_entity, a_collidable, a_bounce) in (&*entities, &cols, &bounces).join() {
-            if let Some(ref ent_collisions) = collisions.get(&a_entity) {
+        for (a_entity, a_bounce) in (&*entities, &bounces).join() {
+            if let Some(ent_collisions) = collisions.get(&a_entity) {
                 for b_entity in ent_collisions.iter() {
                     // TODO: rework this code a bit with some more match / if let action?
                     let result;
                     {
                         let a_position = positions.get(a_entity);
                         let a_velocity = vels.get(a_entity);
-                        let b_collidable = cols.get(*b_entity);
                         let b_bounce = bounces.get(*b_entity);
                         let b_position = positions.get(*b_entity);
                         let b_velocity = vels.get(*b_entity);
 
-                        if a_position.is_none() || a_velocity.is_none() || b_collidable.is_none()
-                            || b_bounce.is_none() || b_position.is_none()
+                        if a_position.is_none() || a_velocity.is_none() || b_bounce.is_none()
+                            || b_position.is_none()
                             || b_velocity.is_none()
                         {
                             continue;
                         }
 
                         result = resolve_elastic_collision(
-                            &a_bounce,
-                            &a_collidable,
+                            a_bounce,
                             a_position.unwrap(),
                             a_velocity.unwrap(),
                             b_bounce.unwrap(),
-                            b_collidable.unwrap(),
                             b_position.unwrap(),
                             b_velocity.unwrap(),
                         );
@@ -95,11 +91,9 @@ fn rotate(vx: f32, vy: f32, angle: f32) -> (f32, f32) {
 // https://gist.github.com/christopher4lis/f9ccb589ee8ecf751481f05a8e59b1dc
 fn resolve_elastic_collision(
     a_bounce: &BounceOnCollision,
-    a_collidable: &collision::Collidable,
     a_position: &position_motion::Position,
     a_velocity: &position_motion::Velocity,
     b_bounce: &BounceOnCollision,
-    b_collidable: &collision::Collidable,
     b_position: &position_motion::Position,
     b_velocity: &position_motion::Velocity,
 ) -> Option<(f32, f32, f32, f32)> {

@@ -20,6 +20,11 @@ pub fn init<'a, 'b>(
 pub struct SpriteCache(pub HashMap<Entity, Mesh>);
 impl SpriteCache {
     pub fn new() -> Self {
+        Default::default()
+    }
+}
+impl Default for SpriteCache {
+    fn default() -> SpriteCache {
         SpriteCache(HashMap::new())
     }
 }
@@ -97,11 +102,11 @@ impl Default for Shape {
 }
 
 pub fn build_mesh(shape: &Shape, ctx: &mut Context, line_width: f32) -> Mesh {
-    match shape {
-        &Shape::Explosion => explosion(ctx, line_width),
-        &Shape::Player => player(ctx, line_width),
-        &Shape::Asteroid => asteroid(ctx, line_width),
-        &Shape::SimpleBullet => simple_bullet(ctx, line_width),
+    match *shape {
+        Shape::Explosion => explosion(ctx, line_width),
+        Shape::Player => player(ctx, line_width),
+        Shape::Asteroid => asteroid(ctx, line_width),
+        Shape::SimpleBullet => simple_bullet(ctx, line_width),
         _ => test(ctx, line_width),
     }
 }

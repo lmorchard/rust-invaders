@@ -67,7 +67,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         if rand::random::<f32>() < 0.3 {
             spawn_asteroid(&mut self.world);
         }
-        self.dispatcher.dispatch(&mut self.world.res);
+        self.dispatcher.dispatch(&self.world.res);
         self.world.maintain();
         Ok(())
     }
@@ -90,28 +90,29 @@ const HW: f32 = PLAYFIELD_WIDTH / 2.0;
 const HH: f32 = PLAYFIELD_HEIGHT / 2.0;
 
 fn spawn_asteroid(world: &mut World) {
-    let x;
-    let xv;
-    if rand::random::<f32>() > 0.5 {
-        x = 0.0 - HW + 100.0;
-        xv = 200.0 + rand::random::<f32>() * 500.0;
+    let x = if rand::random::<f32>() > 0.5 {
+        0.0 - HW + 100.0
     } else {
-        x = HW - 100.0;
-        xv = 0.0 - 200.0 - rand::random::<f32>() * 500.0;
-    }
+        HW - 100.0
+    };
+    let xv = if rand::random::<f32>() > 0.5 {
+        200.0 + rand::random::<f32>() * 500.0
+    } else {
+        0.0 - 200.0 - rand::random::<f32>() * 500.0
+    };
     let y = (0.0 - HH) + (PLAYFIELD_HEIGHT / 12.0) * (rand::random::<f32>() * 12.0);
 
     let size = 25.0 + 150.0 * rand::random::<f32>();
 
-    if !collision::is_empty_at(&world, x, y, size) {
+    if !collision::is_empty_at(world, x, y, size) {
         return;
     }
 
     world
         .create_entity()
         .with(position_motion::Position {
-            x: x,
-            y: y,
+            x,
+            y,
             ..Default::default()
         })
         .with(position_motion::Velocity {
@@ -120,7 +121,7 @@ fn spawn_asteroid(world: &mut World) {
             ..Default::default()
         })
         .with(despawn::Timeout(7.0))
-        .with(collision::Collidable { size: size })
+        .with(collision::Collidable { size })
         .with(bounce::BounceOnCollision {
             ..Default::default()
         })

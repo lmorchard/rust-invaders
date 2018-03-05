@@ -43,6 +43,11 @@ pub struct DamageEvent {
 pub struct DamageEventQueue(pub Vec<DamageEvent>);
 impl DamageEventQueue {
     pub fn new() -> DamageEventQueue {
+        Default::default()
+    }
+}
+impl Default for DamageEventQueue {
+    fn default() -> DamageEventQueue {
         DamageEventQueue(Vec::new())
     }
 }
@@ -62,19 +67,19 @@ impl<'a> System<'a> for DamageOnCollisionSystem {
         // TODO: Set a timer to only send damage once every so often, rather than for every frame
         // entities are in collision
         for (ent, damage) in (&*entities, &damages).join() {
-            if let Some(ref ent_collisions) = collisions.get(&ent) {
+            if let Some(ent_collisions) = collisions.get(&ent) {
                 for other_ent in ent_collisions.iter() {
                     // TODO: Find a better way to identify exclusions - we won't always know
                     // literal entities. Maybe use some sort of marker component
-                    if damage.exclude.contains(&other_ent) {
+                    if damage.exclude.contains(other_ent) {
                         continue;
                     }
                     if damage.despawn {
                         despawn_events.0.push(despawn::DespawnEvent { entity: ent });
                     }
                     damage_events.0.push(DamageEvent {
-                        from: ent.clone(),
-                        to: other_ent.clone(),
+                        from: ent,
+                        to: *other_ent,
                         amount: damage.damage,
                     });
                 }
@@ -103,9 +108,7 @@ impl<'a> System<'a> for HealthSystem {
         damage_events.0.clear();
         for (entity, health) in (&*entities, &mut healths).join() {
             if health.0 <= 0.0 {
-                despawn_events
-                    .0
-                    .push(despawn::DespawnEvent { entity: entity });
+                despawn_events.0.push(despawn::DespawnEvent { entity });
             }
         }
     }

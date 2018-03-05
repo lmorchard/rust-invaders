@@ -85,7 +85,7 @@ impl<'a> System<'a> for ThrusterSetSystem {
         let delta = delta.0;
         for (thruster_set, position, velocity) in (&thruster_set, &position, &mut velocity).join() {
             // TODO: I thought thruster_set.values() would work here, but alas no
-            for (_name, thruster) in &thruster_set.0 {
+            for thruster in thruster_set.0.values() {
                 apply_thrust(delta, thruster, position, velocity);
             }
         }

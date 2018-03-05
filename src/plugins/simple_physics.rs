@@ -74,7 +74,7 @@ impl<'a> System<'a> for FrictionSystem {
             let friction = friction.0;
             let m_inertia = (velocity.x * velocity.x + velocity.y * velocity.y).sqrt();
             let a_inertia = velocity.x.atan2(velocity.y);
-            let m_braking = 0.0 - m_inertia.min((friction * delta));
+            let m_braking = 0.0 - m_inertia.min(friction * delta);
             let v_braking = vec_from_angle(a_inertia) * m_braking;
 
             velocity.x += v_braking.x;

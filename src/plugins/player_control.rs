@@ -39,14 +39,10 @@ pub fn key_down_event(
 ) {
     let mut inputs = world.write_resource::<Inputs>();
     match keycode {
-        Keycode::Up => inputs.up = true,
-        Keycode::W => inputs.up = true,
-        Keycode::Down => inputs.down = true,
-        Keycode::S => inputs.down = true,
-        Keycode::Left => inputs.left = true,
-        Keycode::A => inputs.left = true,
-        Keycode::Right => inputs.right = true,
-        Keycode::D => inputs.right = true,
+        Keycode::Up | Keycode::W => inputs.up = true,
+        Keycode::Down | Keycode::S => inputs.down = true,
+        Keycode::Left | Keycode::A => inputs.left = true,
+        Keycode::Right | Keycode::D => inputs.right = true,
         Keycode::Space => inputs.fire = true,
         Keycode::Return => inputs.special = true,
         _ => (),
@@ -62,14 +58,10 @@ pub fn key_up_event(
 ) {
     let mut inputs = world.write_resource::<Inputs>();
     match keycode {
-        Keycode::Up => inputs.up = false,
-        Keycode::W => inputs.up = false,
-        Keycode::Down => inputs.down = false,
-        Keycode::S => inputs.down = false,
-        Keycode::Left => inputs.left = false,
-        Keycode::A => inputs.left = false,
-        Keycode::Right => inputs.right = false,
-        Keycode::D => inputs.right = false,
+        Keycode::Up | Keycode::W => inputs.up = false,
+        Keycode::Down | Keycode::S => inputs.down = false,
+        Keycode::Left | Keycode::A => inputs.left = false,
+        Keycode::Right | Keycode::D => inputs.right = false,
         Keycode::Space => inputs.fire = false,
         Keycode::Return => inputs.special = false,
         _ => (),

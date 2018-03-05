@@ -36,7 +36,7 @@ struct MainState<'a, 'b> {
 }
 
 impl<'a, 'b> MainState<'a, 'b> {
-    fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
+    fn new(_ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
         let mut world = World::new();
 
         let dispatcher = DispatcherBuilder::new();
@@ -46,7 +46,7 @@ impl<'a, 'b> MainState<'a, 'b> {
         let dispatcher = dispatcher.build();
 
         for _idx in 0..25 {
-            spawn(ctx, &mut world);
+            spawn(&mut world);
         }
 
         Ok(MainState { world, dispatcher })
@@ -57,10 +57,10 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         update_delta_time(&mut self.world, ctx);
 
-        self.dispatcher.dispatch(&mut self.world.res);
+        self.dispatcher.dispatch(&self.world.res);
 
         if rand::random::<f32>() < 0.01 {
-            spawn(ctx, &mut self.world);
+            spawn(&mut self.world);
         }
 
         Ok(())
@@ -78,7 +78,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     }
 }
 
-fn spawn(ctx: &mut Context, world: &mut World) {
+fn spawn(world: &mut World) {
     let scale = 50.0 + (50.0 * rand::random::<f32>());
     world
         .create_entity()
@@ -93,14 +93,13 @@ fn spawn(ctx: &mut Context, world: &mut World) {
             r: (PI * 0.5) - PI * rand::random::<f32>(),
         })
         .with(sprites::Sprite {
-            mesh_selection: if rand::random::<f32>() > 0.5 {
-                sprites::MeshSelection::Player
+            shape: if rand::random::<f32>() > 0.5 {
+                sprites::Shape::Player
             } else {
-                sprites::MeshSelection::Asteroid
+                sprites::Shape::Asteroid
             },
             offset: Point2::new(0.5, 0.5),
             scale: Point2::new(scale, scale),
-            ..Default::default()
         })
         .build();
 }

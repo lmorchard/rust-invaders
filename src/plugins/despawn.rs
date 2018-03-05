@@ -39,6 +39,11 @@ pub struct DespawnEvent {
 pub struct DespawnEventQueue(pub Vec<DespawnEvent>);
 impl DespawnEventQueue {
     pub fn new() -> DespawnEventQueue {
+        Default::default()
+    }
+}
+impl Default for DespawnEventQueue {
+    fn default() -> DespawnEventQueue {
         DespawnEventQueue(Vec::new())
     }
 }
@@ -83,7 +88,7 @@ impl<'a> System<'a> for DespawnOnCollisionSystem {
     fn run(&mut self, data: Self::SystemData) {
         let (entities, collisions, mut despawn_events, on_collisions) = data;
         for (entity, _on_collision) in (&*entities, &on_collisions).join() {
-            if let Some(_) = collisions.get(&entity) {
+            if collisions.get(&entity).is_some() {
                 despawn_events.0.push(despawn::DespawnEvent { entity });
             }
         }
@@ -95,7 +100,7 @@ impl<'a> System<'a> for DespawnRemovalSystem {
     type SystemData = (Entities<'a>, FetchMut<'a, DespawnEventQueue>);
     fn run(&mut self, data: Self::SystemData) {
         let (entities, mut despawn_events) = data;
-        if despawn_events.0.len() > 0 {}
+        if !despawn_events.0.is_empty() {}
         for despawn_event in &despawn_events.0 {
             // TODO: switch to a hashset for marking entities for despawn?
             match entities.delete(despawn_event.entity) {
