@@ -3,3 +3,4 @@ hello.txt
 *.sw?
 *.bak
 SDL2.dll
+xfers/
