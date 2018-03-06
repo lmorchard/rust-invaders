@@ -15,11 +15,17 @@ use ggez::graphics::{MeshBuilder, DrawMode, DrawParam, Mesh, Point2};
 
 static FONT_FILENAME: &'static str = "./hershey-fonts/futural.jhf";
 
-const SPACING: f32 = 55.0;
+const SPACING: f32 = 60.0;
 const ROTATION_SPEED: f32 = PI / 100.0;
 
 fn main() {
     let shapes = load_font(FONT_FILENAME).unwrap();
+
+    {
+        let mut k: Vec<&i32> = shapes.keys().collect();
+        k.sort();
+        println!("SHAPE {:?}", shapes.get(k[0]));
+    };
 
     let mut c = conf::Conf::new();
     c.window_setup.title = String::from("Hershey - Rust Invaders!");
@@ -50,10 +56,14 @@ impl MainState {
     }
 }
 
-pub fn build_mesh(ctx: &mut Context, scale: f32, lines: &Vec<Vec<Point2>>) -> Mesh {
+pub fn build_mesh(ctx: &mut Context, scale: f32, left: &f32, right: &f32, lines: &Vec<Vec<Point2>>) -> Mesh {
     let line_width = 1.0 / scale;
     let mut builder = MeshBuilder::new();
-    // builder.circle(DrawMode::Line(line_width), Point2::new(0.0, 0.0), 0.5, 0.05);
+    builder
+        .line(&[Point2::new(*left, -8.0), Point2::new(*left, 8.0)], line_width / 2.0)
+        .line(&[Point2::new(*right, -8.0), Point2::new(*right, 8.0)], line_width / 2.0)
+        .circle(DrawMode::Line(line_width), Point2::new(0.0, 0.0), 0.5, 0.05);
+
     for line in lines {
         if !line.is_empty() {
             builder.polyline(DrawMode::Line(line_width), line);
@@ -71,7 +81,7 @@ impl event::EventHandler for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx);
 
-        let mut pos_x = 50.0;
+        let mut pos_x = 25.0;
         let mut pos_y = 50.0;
 
         let shape_keys = {
@@ -83,15 +93,17 @@ impl event::EventHandler for MainState {
         for idx in 0..shape_keys.len() {
             let key = shape_keys[idx];
             let shape = self.shapes.get(&key).unwrap();
-            let mesh = build_mesh(ctx, 2.0, &shape.lines);
-            // let mesh = &self.meshes[idx].get_or_insert_with(|| build_mesh(ctx, shape));
+            let mesh = build_mesh(ctx, 2.0, &shape.left, &shape.right, &shape.lines);
+            // let mesh = &self.meshes[idx].get_or_insert_with(|| build_mesh(ctx, 2.0, &shape.lines));
+
+            //pos_x += (0.0 - shape.left);
 
             graphics::draw_ex(
                 ctx,
                 &mesh,
                 DrawParam {
                     dest: Point2::new(pos_x, pos_y),
-                    rotation: self.rotation,
+                    rotation: 0.0, //self.rotation,
                     offset: Point2::new(0.0, 0.0),
                     scale: Point2::new(2.0, 2.0),
                     ..Default::default()
@@ -99,8 +111,10 @@ impl event::EventHandler for MainState {
             )?;
 
             pos_x += SPACING;
-            if pos_x >= 800.0 {
-                pos_x = 50.0;
+            // pos_x += (0.0 - shape.left) + shape.right + 3.0;
+            // pos_x += shape.right + 15.0;
+            if pos_x >= 700.0 {
+                pos_x = 25.0;
                 pos_y += SPACING;
             }
         }
