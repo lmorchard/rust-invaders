@@ -8,7 +8,14 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
-- [ ] Run clippy and take its advice
+- [ ] Goals - score?
+    - [ ] Planet limb below, has health & takes damage from asteroids, don't let it die
+    - [ ] Survive time limit?
+    - [ ] High score?
+
+- [ ] Player death
+
+- [ ] Levels / level restart on death
 
 - [ ] Implement additional tombstone types - i.e. big asteroid becomes 2 smaller ones
 
@@ -31,15 +38,6 @@ You know what? I just don't really know, but it'll be a mess.
 - [ ] Weapons
 
 - [ ] Baddies
-
-- [ ] Goals - score?
-    - [ ] Planet limb below, has health & takes damage from asteroids, don't let it die
-    - [ ] Survive time limit?
-    - [ ] High score?
-
-- [ ] Player death
-
-- [ ] Levels / level restart on death
 
 - [ ] Proportional throttle control tied to controller joystick axes
 
