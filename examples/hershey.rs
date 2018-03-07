@@ -15,7 +15,7 @@ use ggez::graphics::{MeshBuilder, DrawMode, DrawParam, Mesh, Point2};
 
 static FONT_FILENAME: &'static str = "./hershey-fonts/futural.jhf";
 
-const SPACING: f32 = 60.0;
+const SPACING: f32 = 80.0;
 const ROTATION_SPEED: f32 = PI / 100.0;
 
 fn main() {
@@ -43,7 +43,7 @@ fn main() {
 struct MainState {
     rotation: f32,
     shapes: FontShapes,
-    meshes: Vec<Option<Mesh>>,
+    meshes: HashMap<usize, Mesh>,
 }
 
 impl MainState {
@@ -51,18 +51,14 @@ impl MainState {
         Ok(MainState {
             shapes,
             rotation: 0.0,
-            meshes: Vec::new(),
+            meshes: HashMap::new(),
         })
     }
 }
 
-pub fn build_mesh(ctx: &mut Context, scale: f32, left: &f32, right: &f32, lines: &Vec<Vec<Point2>>) -> Mesh {
+pub fn build_mesh(ctx: &mut Context, scale: f32, lines: &Vec<Vec<Point2>>) -> Mesh {
     let line_width = 1.0 / scale;
     let mut builder = MeshBuilder::new();
-    builder
-        .line(&[Point2::new(*left, -8.0), Point2::new(*left, 8.0)], line_width / 2.0)
-        .line(&[Point2::new(*right, -8.0), Point2::new(*right, 8.0)], line_width / 2.0)
-        .circle(DrawMode::Line(line_width), Point2::new(0.0, 0.0), 0.5, 0.05);
 
     for line in lines {
         if !line.is_empty() {
@@ -90,29 +86,30 @@ impl event::EventHandler for MainState {
             k
         };
 
+        let scale = 1.5;
+
         for idx in 0..shape_keys.len() {
             let key = shape_keys[idx];
             let shape = self.shapes.get(&key).unwrap();
-            let mesh = build_mesh(ctx, 2.0, &shape.left, &shape.right, &shape.lines);
-            // let mesh = &self.meshes[idx].get_or_insert_with(|| build_mesh(ctx, 2.0, &shape.lines));
+            let mesh = self.meshes.entry(idx)
+                .or_insert_with(|| build_mesh(ctx, scale, &shape.lines));
 
-            //pos_x += (0.0 - shape.left);
+            pos_x += (0.0 - shape.left) * scale;
 
             graphics::draw_ex(
                 ctx,
-                &mesh,
+                &*mesh,
                 DrawParam {
                     dest: Point2::new(pos_x, pos_y),
-                    rotation: 0.0, //self.rotation,
+                    rotation: 0.0,
+                    // rotation: self.rotation,
                     offset: Point2::new(0.0, 0.0),
-                    scale: Point2::new(2.0, 2.0),
+                    scale: Point2::new(scale, scale),
                     ..Default::default()
                 },
             )?;
 
-            pos_x += SPACING;
-            // pos_x += (0.0 - shape.left) + shape.right + 3.0;
-            // pos_x += shape.right + 15.0;
+            pos_x += shape.right * scale;
             if pos_x >= 700.0 {
                 pos_x = 25.0;
                 pos_y += SPACING;
