@@ -21,12 +21,6 @@ const ROTATION_SPEED: f32 = PI / 100.0;
 fn main() {
     let shapes = load_font(FONT_FILENAME).unwrap();
 
-    {
-        let mut k: Vec<&i32> = shapes.keys().collect();
-        k.sort();
-        println!("SHAPE {:?}", shapes.get(k[0]));
-    };
-
     let mut c = conf::Conf::new();
     c.window_setup.title = String::from("Hershey - Rust Invaders!");
     c.window_setup.samples = conf::NumSamples::Eight;
@@ -43,7 +37,7 @@ fn main() {
 struct MainState {
     rotation: f32,
     shapes: FontShapes,
-    meshes: HashMap<usize, Mesh>,
+    meshes: HashMap<char, Mesh>,
 }
 
 impl MainState {
@@ -80,19 +74,23 @@ impl event::EventHandler for MainState {
         let mut pos_x = 25.0;
         let mut pos_y = 50.0;
 
-        let shape_keys = {
-            let mut k: Vec<&i32> = self.shapes.keys().collect();
+        let title: Vec<char> = "Rust Invaders! DANGER! 0024 <me@lmorchard.com>"
+            .chars()
+            .collect();
+
+        let _shape_keys = {
+            let mut k: Vec<&char> = self.shapes.keys().collect();
             k.sort();
             k
         };
 
         let scale = 1.5;
 
-        for idx in 0..shape_keys.len() {
-            let key = shape_keys[idx];
+        for idx in 0..title.len() {
+            let key = title[idx];
             let shape = self.shapes.get(&key).unwrap();
             let mesh = self.meshes
-                .entry(idx)
+                .entry(key)
                 .or_insert_with(|| build_mesh(ctx, scale, &shape.lines));
 
             pos_x += (0.0 - shape.left) * scale;
@@ -143,7 +141,7 @@ impl FontShape {
     }
 }
 
-pub struct FontShapes(pub HashMap<i32, FontShape>);
+pub struct FontShapes(pub HashMap<char, FontShape>);
 impl FontShapes {
     pub fn new() -> FontShapes {
         Default::default()
@@ -155,13 +153,13 @@ impl Default for FontShapes {
     }
 }
 impl Deref for FontShapes {
-    type Target = HashMap<i32, FontShape>;
+    type Target = HashMap<char, FontShape>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 impl DerefMut for FontShapes {
-    fn deref_mut(&mut self) -> &mut HashMap<i32, FontShape> {
+    fn deref_mut(&mut self) -> &mut HashMap<char, FontShape> {
         &mut self.0
     }
 }
@@ -174,9 +172,23 @@ pub fn load_font(filename: &str) -> Result<FontShapes, Box<Error>> {
     let f = File::open(filename)?;
     let mut shapes = FontShapes::new();
 
+    let ids: [i32; 95] = [
+        501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518,
+        519, 520, 521, 522, 523, 524, 525, 526, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610,
+        611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625, 626, 699, 700,
+        701, 702, 703, 704, 705, 706, 707, 708, 709, 714, 715, 717, 719, 720, 721, 722, 723, 724,
+        725, 726, 728, 731, 733, 734, 804, 832, 1210, 1211, 1212, 1213, 1252, 1405, 1406, 1407,
+        1408, 2241, 2242, 2246, 2271, 2273, 12345,
+    ];
+
+    let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 0123456789!?\"$/()|-+=*'#&\\^.,:;`[]{}<>~%@_";
+
+    let ids_to_chars: HashMap<&i32, char> = ids.iter().zip(chars.chars()).collect();
+
     for line_result in BufReader::new(f).lines() {
         let line = line_result?;
-        let key = line.get(0..5).unwrap().trim().parse::<i32>().unwrap();
+        let id = line.get(0..5).unwrap().trim().parse::<i32>().unwrap();
+        let key = ids_to_chars.get(&id).unwrap();
         let mut data = line.get(8..).unwrap().chars();
 
         let mut shape = FontShape::new(
@@ -192,7 +204,7 @@ pub fn load_font(filename: &str) -> Result<FontShapes, Box<Error>> {
             }
             shape.add_point(Point2::new(char_to_coord(cx), char_to_coord(cy)));
         }
-        shapes.insert(key, shape);
+        shapes.insert(*key, shape);
     }
 
     Ok(shapes)
