@@ -11,7 +11,7 @@ use std::f32;
 use std::f32::consts::PI;
 
 use ggez::*;
-use ggez::graphics::{MeshBuilder, DrawMode, DrawParam, Mesh, Point2};
+use ggez::graphics::{DrawMode, DrawParam, Mesh, MeshBuilder, Point2};
 
 static FONT_FILENAME: &'static str = "./hershey-fonts/futural.jhf";
 
@@ -91,7 +91,8 @@ impl event::EventHandler for MainState {
         for idx in 0..shape_keys.len() {
             let key = shape_keys[idx];
             let shape = self.shapes.get(&key).unwrap();
-            let mesh = self.meshes.entry(idx)
+            let mesh = self.meshes
+                .entry(idx)
                 .or_insert_with(|| build_mesh(ctx, scale, &shape.lines));
 
             pos_x += (0.0 - shape.left) * scale;
@@ -125,17 +126,13 @@ impl event::EventHandler for MainState {
 pub struct FontShape {
     pub left: f32,
     pub right: f32,
-    pub lines: Vec<Vec<Point2>>
+    pub lines: Vec<Vec<Point2>>,
 }
 impl FontShape {
     pub fn new(left: f32, right: f32) -> FontShape {
         let mut lines = Vec::new();
         lines.push(Vec::new());
-        FontShape {
-            left,
-            right,
-            lines
-        }
+        FontShape { left, right, lines }
     }
     pub fn add_line(&mut self) {
         self.lines.push(Vec::new());
@@ -184,7 +181,7 @@ pub fn load_font(filename: &str) -> Result<FontShapes, Box<Error>> {
 
         let mut shape = FontShape::new(
             char_to_coord(data.next().unwrap()),
-            char_to_coord(data.next().unwrap())
+            char_to_coord(data.next().unwrap()),
         );
 
         while let Some(cx) = data.next() {
@@ -193,10 +190,7 @@ pub fn load_font(filename: &str) -> Result<FontShapes, Box<Error>> {
                 shape.add_line();
                 continue;
             }
-            shape.add_point(Point2::new(
-                char_to_coord(cx),
-                char_to_coord(cy)
-            ));
+            shape.add_point(Point2::new(char_to_coord(cx), char_to_coord(cy)));
         }
         shapes.insert(key, shape);
     }
