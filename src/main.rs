@@ -58,6 +58,8 @@ impl<'a, 'b> MainState<'a, 'b> {
         let dispatcher = despawn::init(&mut world, dispatcher);
         let dispatcher = dispatcher.build();
 
+        spawn_planet(&mut world);
+
         spawn_player(&mut world);
 
         for _idx in 0..10 {
@@ -71,13 +73,36 @@ impl<'a, 'b> MainState<'a, 'b> {
             zoom: 1.0,
         })
     }
+
+    fn draw_backdrop(&mut self, ctx: &mut Context) {
+        /*
+        graphics::circle(
+            ctx,
+            DrawMode::Line(1.0),
+            Point2::new(0.0, 2975.0),
+            2600.0,
+            3.0
+        ).unwrap();
+
+        graphics::rectangle(
+            ctx,
+            DrawMode::Line(1.0),
+            Rect::new(
+                0.0 - (PLAYFIELD_WIDTH / 2.0) - 1.0,
+                0.0 - (PLAYFIELD_HEIGHT / 2.0) - 1.0,
+                PLAYFIELD_WIDTH + 2.0,
+                PLAYFIELD_HEIGHT + 2.0,
+            ),
+        ).unwrap();
+        */
+    }
 }
 
 impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         update_delta_time(&mut self.world, ctx);
 
-        if rand::random::<f32>() < 0.1 {
+        if rand::random::<f32>() < 0.025 {
             spawn_asteroid(&mut self.world);
         }
 
@@ -91,16 +116,8 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         graphics::set_background_color(ctx, graphics::BLACK);
         graphics::clear(ctx);
         graphics::set_color(ctx, graphics::WHITE)?;
-        graphics::rectangle(
-            ctx,
-            DrawMode::Line(1.0),
-            Rect::new(
-                0.0 - (PLAYFIELD_WIDTH / 2.0) - 1.0,
-                0.0 - (PLAYFIELD_HEIGHT / 2.0) - 1.0,
-                PLAYFIELD_WIDTH + 2.0,
-                PLAYFIELD_HEIGHT + 2.0,
-            ),
-        ).unwrap();
+
+        self.draw_backdrop(ctx);
 
         sprites::draw(&mut self.world, ctx)?;
 
@@ -151,14 +168,14 @@ fn spawn_player(world: &mut World) {
     world
         .create_entity()
         .with(position_motion::Position {
-            y: (PLAYFIELD_HEIGHT / 2.0) - 100.0,
+            y: (PLAYFIELD_HEIGHT / 2.0) - 200.0,
             ..Default::default()
         })
         .with(position_motion::PositionBounds(Rect::new(
             0.0 - PLAYFIELD_WIDTH / 2.0 + 25.0,
-            0.0 - PLAYFIELD_HEIGHT / 2.0 + 25.0,
+            0.0 - PLAYFIELD_HEIGHT / 2.0 + 5.0,
             PLAYFIELD_WIDTH - 50.0,
-            PLAYFIELD_HEIGHT - 50.0,
+            PLAYFIELD_HEIGHT - 10.0,
         )))
         .with(position_motion::Velocity {
             ..Default::default()
@@ -182,12 +199,38 @@ fn spawn_player(world: &mut World) {
             ..Default::default()
         })
         .with(collision::Collidable { size: 50.0 })
+        .with(bounce::BounceOnCollision { mass: 70.0 })
         .with(sprites::Sprite {
             shape: sprites::Shape::Player,
             scale: Point2::new(50.0, 50.0),
             ..Default::default()
         })
         .with(player_control::PlayerControl)
+        .build();
+}
+
+fn spawn_planet(world: &mut World) {
+    world
+        .create_entity()
+        .with(position_motion::Position {
+            x: 0.0,
+            y: 1850.0,
+            ..Default::default()
+        })
+        .with(position_motion::Velocity {
+            r: PI * 0.03,
+            ..Default::default()
+        })
+        .with(sprites::Sprite {
+            shape: sprites::Shape::Planet,
+            scale: Point2::new(3000.0, 3000.0),
+            ..Default::default()
+        })
+        .with(collision::Collidable { size: 3000.0 })
+        .with(simple_physics::SpeedLimit(0.0))
+        .with(simple_physics::Friction(100000.0))
+        .with(bounce::BounceOnCollision { mass: 100000.0 })
+        .with(health_damage::Health(100000.0))
         .build();
 }
 
@@ -221,9 +264,9 @@ fn spawn_asteroid(world: &mut World) {
             ..Default::default()
         })
         .with(despawn::DespawnBounds(Rect::new(
-            0.0 - HW,
+            0.0 - HW - 200.0,
             0.0 - HH - 200.0,
-            PLAYFIELD_WIDTH,
+            PLAYFIELD_WIDTH + 400.0,
             PLAYFIELD_HEIGHT + 400.0,
         )))
         //.with(health_damage::DamageOnCollision {

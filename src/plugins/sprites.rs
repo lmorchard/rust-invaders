@@ -94,6 +94,7 @@ pub enum Shape {
     Asteroid,
     Explosion,
     SimpleBullet,
+    Planet,
 }
 impl Default for Shape {
     fn default() -> Shape {
@@ -107,6 +108,7 @@ pub fn build_mesh(shape: &Shape, ctx: &mut Context, line_width: f32) -> Mesh {
         Shape::Player => player(ctx, line_width),
         Shape::Asteroid => asteroid(ctx, line_width),
         Shape::SimpleBullet => simple_bullet(ctx, line_width),
+        Shape::Planet => planet(ctx, line_width),
         _ => test(ctx, line_width),
     }
 }
@@ -135,6 +137,34 @@ pub fn test(ctx: &mut Context, line_width: f32) -> Mesh {
         .circle(DrawMode::Line(line_width), Point2::new(0.5, 0.5), 0.5, 0.05)
         .line(&points![(0.4, 0.5), (0.6, 0.5)], line_width)
         .line(&points![(0.5, 0.4), (0.5, 0.6)], line_width)
+        .build(ctx)
+        .unwrap()
+}
+
+pub fn planet(ctx: &mut Context, line_width: f32) -> Mesh {
+    let mut num_points = 100.0;
+    let max_radius = 0.4975;
+    let min_radius = 0.45;
+    let rotation_step = (PI * 2.0) / num_points;
+
+    let mut points = Vec::new();
+    let mut rotation: f32 = 0.0;
+    loop {
+        let distance = rand::thread_rng().gen_range(min_radius, max_radius);
+        points.push(Point2::new(
+            0.5 - distance * rotation.cos(),
+            0.5 - distance * rotation.sin(),
+        ));
+        rotation += rotation_step;
+        num_points -= 1.0;
+        if num_points <= 0.0 {
+            break;
+        }
+    }
+
+    MeshBuilder::new()
+        .polygon(DrawMode::Line(line_width), &points)
+        .circle(DrawMode::Line(line_width), Point2::new(0.5, 0.5), 0.5, 0.001)
         .build(ctx)
         .unwrap()
 }
