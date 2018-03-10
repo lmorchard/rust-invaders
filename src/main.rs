@@ -63,7 +63,6 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         let dispatcher = dispatcher.build();
 
-
         spawn_planet(&mut world);
 
         spawn_player(&mut world);
@@ -296,7 +295,7 @@ impl<'a> System<'a> for CollisionMatchSystem {
         FetchMut<'a, health_damage::DamageEventQueue>,
         ReadStorage<'a, metadata::Tags>,
     );
-    fn run (&mut self, data: Self::SystemData) {
+    fn run(&mut self, data: Self::SystemData) {
         let (entities, collisions, mut damage, tags) = data;
         for (a_entity, a_tags) in (&*entities, &tags).join() {
             for &a_tag in &a_tags.0 {
@@ -318,14 +317,14 @@ impl CollisionMatchSystem {
         match (a_tag, b_tag) {
             ("player", "enemy") => {
                 println!("PLAYER HIT ENEMY!");
-            },
+            }
             ("player_bullet", "enemy") => {
                 println!("PLAYER BULLET HIT ENEMY!");
-            },
+            }
             ("asteroid", "asteroid") => {
                 println!("ASTEROID HIT ASTEROID");
-            },
-            (&_, _) => ()
+            }
+            (&_, _) => (),
         }
     }
 }

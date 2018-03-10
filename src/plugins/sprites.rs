@@ -164,7 +164,12 @@ pub fn planet(ctx: &mut Context, line_width: f32) -> Mesh {
 
     MeshBuilder::new()
         .polygon(DrawMode::Line(line_width), &points)
-        .circle(DrawMode::Line(line_width), Point2::new(0.5, 0.5), 0.5, 0.001)
+        .circle(
+            DrawMode::Line(line_width),
+            Point2::new(0.5, 0.5),
+            0.5,
+            0.001,
+        )
         .build(ctx)
         .unwrap()
 }
