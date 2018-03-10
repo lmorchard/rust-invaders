@@ -1,6 +1,7 @@
 pub mod bounce;
 pub mod collision;
 pub mod despawn;
+pub mod fonts;
 pub mod guns;
 pub mod health_damage;
 pub mod metadata;
