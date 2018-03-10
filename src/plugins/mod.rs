@@ -1,10 +1,11 @@
-pub mod collision;
 pub mod bounce;
-pub mod health_damage;
+pub mod collision;
 pub mod despawn;
-pub mod position_motion;
-pub mod sprites;
-pub mod simple_physics;
-pub mod thruster;
 pub mod guns;
+pub mod health_damage;
+pub mod metadata;
 pub mod player_control;
+pub mod position_motion;
+pub mod simple_physics;
+pub mod sprites;
+pub mod thruster;

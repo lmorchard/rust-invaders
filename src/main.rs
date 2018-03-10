@@ -45,7 +45,9 @@ impl<'a, 'b> MainState<'a, 'b> {
         let mut world = World::new();
 
         let dispatcher = DispatcherBuilder::new();
+
         let dispatcher = init(&mut world, dispatcher);
+        let dispatcher = metadata::init(&mut world, dispatcher);
         let dispatcher = guns::init(&mut world, dispatcher);
         let dispatcher = thruster::init(&mut world, dispatcher);
         let dispatcher = collision::init(&mut world, dispatcher);
@@ -56,7 +58,11 @@ impl<'a, 'b> MainState<'a, 'b> {
         let dispatcher = position_motion::init(&mut world, dispatcher);
         let dispatcher = sprites::init(&mut world, dispatcher);
         let dispatcher = despawn::init(&mut world, dispatcher);
+
+        let dispatcher = dispatcher.add(CollisionMatchSystem, "collision_match", &[]);
+
         let dispatcher = dispatcher.build();
+
 
         spawn_planet(&mut world);
 
@@ -167,6 +173,8 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
 fn spawn_player(world: &mut World) {
     world
         .create_entity()
+        .with(metadata::Name("player"))
+        .with(metadata::Tags::new(vec!["player", "friend"]))
         .with(position_motion::Position {
             y: (PLAYFIELD_HEIGHT / 2.0) - 200.0,
             ..Default::default()
@@ -199,7 +207,7 @@ fn spawn_player(world: &mut World) {
             ..Default::default()
         })
         .with(collision::Collidable { size: 50.0 })
-        .with(bounce::BounceOnCollision { mass: 70.0 })
+        .with(bounce::BounceOnCollision { mass: 5.0 })
         .with(sprites::Sprite {
             shape: sprites::Shape::Player,
             scale: Point2::new(50.0, 50.0),
@@ -212,13 +220,14 @@ fn spawn_player(world: &mut World) {
 fn spawn_planet(world: &mut World) {
     world
         .create_entity()
+        .with(metadata::Tags::new(vec!["planet", "friend"]))
         .with(position_motion::Position {
             x: 0.0,
             y: 1850.0,
             ..Default::default()
         })
         .with(position_motion::Velocity {
-            r: PI * 0.03,
+            r: PI * 0.015,
             ..Default::default()
         })
         .with(sprites::Sprite {
@@ -248,6 +257,7 @@ fn spawn_asteroid(world: &mut World) {
 
     world
         .create_entity()
+        .with(metadata::Tags::new(vec!["asteroid", "enemy"]))
         .with(position_motion::Position { x, y, ..Default::default() })
         .with(position_motion::Velocity {
             x: 50.0 - 100.0 * rand::random::<f32>(),
@@ -276,4 +286,46 @@ fn spawn_asteroid(world: &mut World) {
         .with(health_damage::Health(100.0))
         .with(despawn::Tombstone)
         .build();
+}
+
+pub struct CollisionMatchSystem;
+impl<'a> System<'a> for CollisionMatchSystem {
+    type SystemData = (
+        Entities<'a>,
+        Fetch<'a, collision::Collisions>,
+        FetchMut<'a, health_damage::DamageEventQueue>,
+        ReadStorage<'a, metadata::Tags>,
+    );
+    fn run (&mut self, data: Self::SystemData) {
+        let (entities, collisions, mut damage, tags) = data;
+        for (a_entity, a_tags) in (&*entities, &tags).join() {
+            for &a_tag in &a_tags.0 {
+                if let Some(ent_collisions) = collisions.get(&a_entity) {
+                    for b_entity in ent_collisions.iter() {
+                        if let Some(b_tags) = tags.get(*b_entity) {
+                            for &b_tag in &b_tags.0 {
+                                self.handle_collision(&a_tag, &b_tag, &a_entity, &b_entity);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+impl CollisionMatchSystem {
+    fn handle_collision(&mut self, a_tag: &str, b_tag: &str, a_entity: &Entity, b_entity: &Entity) {
+        match (a_tag, b_tag) {
+            ("player", "enemy") => {
+                println!("PLAYER HIT ENEMY!");
+            },
+            ("player_bullet", "enemy") => {
+                println!("PLAYER BULLET HIT ENEMY!");
+            },
+            ("asteroid", "asteroid") => {
+                println!("ASTEROID HIT ASTEROID");
+            },
+            (&_, _) => ()
+        }
+    }
 }

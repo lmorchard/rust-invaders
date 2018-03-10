@@ -54,6 +54,10 @@ impl<'a> System<'a> for GunSystem {
             let bullet = entities.create();
             lazy.insert(
                 bullet,
+                metadata::Tags::new(vec!["player_bullet"]),
+            );
+            lazy.insert(
+                bullet,
                 position_motion::Position {
                     x: position.x,
                     y: position.y - 50.0,
@@ -78,7 +82,7 @@ impl<'a> System<'a> for GunSystem {
             );
             lazy.insert(
                 bullet,
-                despawn::DespawnBounds(Rect::new(-800.0, -450.0, 1600.0, 900.0)),
+                despawn::DespawnBounds(Rect::new(-800.0, -550.0, 1600.0, 1000.0)),
             );
             lazy.insert(
                 bullet,
