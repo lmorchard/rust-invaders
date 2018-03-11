@@ -52,7 +52,7 @@ impl<'a> System<'a> for GunSystem {
             gun.cooldown = gun.period;
 
             let bullet = entities.create();
-            lazy.insert(bullet, metadata::Tags::new(vec!["player_bullet"]));
+            lazy.insert(bullet, metadata::Tags::new(vec!["player_weapon"]));
             lazy.insert(
                 bullet,
                 position_motion::Position {

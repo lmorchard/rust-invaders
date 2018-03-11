@@ -8,7 +8,8 @@ pub fn init<'a, 'b>(
     dispatcher: DispatcherBuilder<'a, 'b>,
 ) -> DispatcherBuilder<'a, 'b> {
     world.add_resource(PlayerScore::new());
-    dispatcher
+    world.register::<PointsOnLastHit>();
+    dispatcher.add(PointsOnLastHitSystem, "points_on_last_hit", &[])
 }
 
 pub fn update(world: &mut World) -> GameResult<()> {
@@ -33,6 +34,37 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
     Ok(())
 }
 
+#[derive(Component, Debug)]
+pub struct PointsOnLastHit(pub i32);
+pub struct PointsOnLastHitSystem;
+impl<'a> System<'a> for PointsOnLastHitSystem {
+    type SystemData = (
+        Entities<'a>,
+        FetchMut<'a, PlayerScore>,
+        Fetch<'a, despawn::DespawnEventQueue>,
+        ReadStorage<'a, PointsOnLastHit>,
+        ReadStorage<'a, health_damage::Health>,
+        ReadStorage<'a, metadata::Tags>,
+    );
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities, mut player_score, despawn_events, points_on_last_hits, healths, tags) = data;
+        for despawn_event in &despawn_events.0 {
+            let entity = despawn_event.entity;
+            if let (Some(points), Some(health)) =
+                (points_on_last_hits.get(entity), healths.get(entity))
+            {
+                if let Some(last_hurt_by) = health.last_hurt_by {
+                    if let Some(tags) = tags.get(last_hurt_by) {
+                        if tags.0.contains(&"player") || tags.0.contains(&"player_weapon") {
+                            player_score.increment(points.0);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct PlayerScore {
     current: i32,
@@ -44,7 +76,7 @@ impl PlayerScore {
         PlayerScore {
             current: 0,
             displayed: 0,
-            factor: 10
+            factor: 10,
         }
     }
     pub fn get(&self) -> i32 {

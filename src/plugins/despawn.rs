@@ -1,3 +1,4 @@
+use ggez::*;
 use ggez::graphics::*;
 use specs::*;
 use plugins::*;
@@ -28,6 +29,27 @@ pub fn init<'a, 'b>(
             "despawn_removal_system",
             &["damage_on_collision"],
         )
+}
+
+pub fn update(world: &mut World) -> GameResult<()> {
+    let mut despawn_events = world.write_resource::<DespawnEventQueue>();
+    despawn_events.0.clear();
+    Ok(())
+}
+
+pub struct DespawnRemovalSystem;
+impl<'a> System<'a> for DespawnRemovalSystem {
+    type SystemData = (Entities<'a>, FetchMut<'a, DespawnEventQueue>);
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities, mut despawn_events) = data;
+        if !despawn_events.0.is_empty() {}
+        for despawn_event in &despawn_events.0 {
+            // TODO: switch to a hashset for marking entities for despawn?
+            match entities.delete(despawn_event.entity) {
+                _ => (),
+            };
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -92,22 +114,6 @@ impl<'a> System<'a> for DespawnOnCollisionSystem {
                 despawn_events.0.push(despawn::DespawnEvent { entity });
             }
         }
-    }
-}
-
-pub struct DespawnRemovalSystem;
-impl<'a> System<'a> for DespawnRemovalSystem {
-    type SystemData = (Entities<'a>, FetchMut<'a, DespawnEventQueue>);
-    fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut despawn_events) = data;
-        if !despawn_events.0.is_empty() {}
-        for despawn_event in &despawn_events.0 {
-            // TODO: switch to a hashset for marking entities for despawn?
-            match entities.delete(despawn_event.entity) {
-                _ => (),
-            };
-        }
-        despawn_events.0.clear();
     }
 }
 

@@ -98,7 +98,7 @@ pub fn spawn_planet(world: &mut World) {
         .with(simple_physics::SpeedLimit(0.0))
         .with(simple_physics::Friction(100000.0))
         .with(bounce::BounceOnCollision { mass: 100000.0 })
-        .with(health_damage::Health(100000.0))
+        .with(health_damage::Health::new(100000.0))
         .build();
 }
 
@@ -142,7 +142,8 @@ pub fn spawn_asteroid(world: &mut World) {
         //    damage: 100.0,
         //    ..Default::default()
         //})
-        .with(health_damage::Health(100.0))
+        .with(health_damage::Health::new(100.0))
+        .with(score::PointsOnLastHit(1000))
         .with(despawn::Tombstone)
         .build();
 }
@@ -193,16 +194,13 @@ impl CollisionMatchSystem {
                 println!("PLAYER HIT ENEMY!");
             }
             ("player_bullet", "enemy") => {
-                println!("PLAYER BULLET HIT ENEMY!");
-                player_score.increment(1000);
+                // player_score.increment(1000);
             }
             ("asteroid", "asteroid") => {
-                println!("ASTEROID HIT ASTEROID");
-                player_score.increment(100);
+                // player_score.increment(100);
             }
             ("asteroid", "planet") => {
-                println!("ASTEROID HIT PLANET");
-                player_score.decrement(1000);
+                // player_score.decrement(1000);
             }
             (&_, _) => (),
         }

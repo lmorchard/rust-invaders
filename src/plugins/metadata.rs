@@ -14,7 +14,7 @@ pub struct Name(pub &'static str);
 
 // TODO: Figure out how to switch from strings to an Enum while decoupling generic library from
 // game logic?
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Tags(pub Vec<&'static str>);
 impl Tags {
     pub fn new(tags: Vec<&'static str>) -> Tags {

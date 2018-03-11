@@ -17,6 +17,12 @@ You know what? I just don't really know, but it'll be a mess.
 
 - [ ] Levels / level restart on death
 
+- [ ] Rework tags component with some utility methods - e.g. no more tags.0.contains()
+
+- [ ] Rework tags component to use Enum rather than arbitrary strings
+
+- [ ] Bullet entities should identify owner source for damage purposes
+
 - [ ] Implement additional tombstone types - i.e. big asteroid becomes 2 smaller ones
 
 - [ ] Implement despawn reasons and different tombstones (or lack thereof) based on reason

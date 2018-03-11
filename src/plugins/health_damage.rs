@@ -14,7 +14,36 @@ pub fn init<'a, 'b>(
 }
 
 #[derive(Component, Debug)]
-pub struct Health(pub f32);
+pub struct Health {
+    pub health: f32,
+    pub last_hurt_by: Option<Entity>,
+    pub last_healed_by: Option<Entity>,
+}
+impl Health {
+    pub fn new(health: f32) -> Health {
+        Health {
+            health,
+            ..Default::default()
+        }
+    }
+    pub fn hurt(&mut self, amount: f32, from: Entity) {
+        self.health -= amount;
+        self.last_hurt_by = Some(from);
+    }
+    pub fn heal(&mut self, amount: f32, from: Entity) {
+        self.health += amount;
+        self.last_healed_by = Some(from);
+    }
+}
+impl Default for Health {
+    fn default() -> Health {
+        Health {
+            health: 100.0,
+            last_hurt_by: None,
+            last_healed_by: None,
+        }
+    }
+}
 
 #[derive(Component, Debug)]
 pub struct DamageOnCollision {
@@ -61,7 +90,6 @@ impl<'a> System<'a> for DamageOnCollisionSystem {
         FetchMut<'a, despawn::DespawnEventQueue>,
         ReadStorage<'a, DamageOnCollision>,
     );
-
     fn run(&mut self, data: Self::SystemData) {
         let (entities, collisions, mut damage_events, mut despawn_events, damages) = data;
         // TODO: Set a timer to only send damage once every so often, rather than for every frame
@@ -96,18 +124,17 @@ impl<'a> System<'a> for HealthSystem {
         FetchMut<'a, despawn::DespawnEventQueue>,
         WriteStorage<'a, Health>,
     );
-
     fn run(&mut self, data: Self::SystemData) {
         let (entities, mut damage_events, mut despawn_events, mut healths) = data;
         // TODO: Maintain a timer to ignore repeated damage from a source for a period of time
         for damage_event in &damage_events.0 {
             if let Some(ref mut health) = healths.get_mut(damage_event.to) {
-                health.0 -= damage_event.amount;
+                health.hurt(damage_event.amount, damage_event.from);
             }
         }
         damage_events.0.clear();
         for (entity, health) in (&*entities, &mut healths).join() {
-            if health.0 <= 0.0 {
+            if health.health <= 0.0 {
                 despawn_events.0.push(despawn::DespawnEvent { entity });
             }
         }
