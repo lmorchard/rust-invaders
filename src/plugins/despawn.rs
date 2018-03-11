@@ -24,32 +24,22 @@ pub fn init<'a, 'b>(
             "despawn_on_collision_system",
             &["damage_on_collision"],
         )
-        .add(
-            DespawnRemovalSystem,
-            "despawn_removal_system",
-            &["damage_on_collision"],
-        )
 }
 
 pub fn update(world: &mut World) -> GameResult<()> {
+    let mut entities = world.entities();
     let mut despawn_events = world.write_resource::<DespawnEventQueue>();
-    despawn_events.0.clear();
-    Ok(())
-}
-
-pub struct DespawnRemovalSystem;
-impl<'a> System<'a> for DespawnRemovalSystem {
-    type SystemData = (Entities<'a>, FetchMut<'a, DespawnEventQueue>);
-    fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut despawn_events) = data;
-        if !despawn_events.0.is_empty() {}
-        for despawn_event in &despawn_events.0 {
-            // TODO: switch to a hashset for marking entities for despawn?
-            match entities.delete(despawn_event.entity) {
-                _ => (),
-            };
+    for despawn_event in &despawn_events.0 {
+        if let Err(err) = entities.delete(despawn_event.entity) {
+            return Err(GameError::UnknownError(format!(
+                "Failed to delete despawning entity {:?} - {:?}",
+                despawn_event.entity,
+                err
+            )));
         }
     }
+    despawn_events.0.clear();
+    Ok(())
 }
 
 #[derive(Debug, Eq, PartialEq)]

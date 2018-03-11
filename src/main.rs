@@ -84,10 +84,10 @@ impl<'a, 'b> MainState<'a, 'b> {
 impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         update_delta_time(&mut self.world, ctx);
-        despawn::update(&mut self.world)?;
         game::update(&mut self.world)?;
         self.dispatcher.dispatch(&self.world.res);
         score::update(&mut self.world)?;
+        despawn::update(&mut self.world)?;
         self.world.maintain();
         Ok(())
     }

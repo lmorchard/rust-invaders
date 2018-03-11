@@ -55,6 +55,7 @@ impl<'a> System<'a> for PointsOnLastHitSystem {
             {
                 if let Some(last_hurt_by) = health.last_hurt_by {
                     if let Some(tags) = tags.get(last_hurt_by) {
+                        // TODO: stop hardcoding these strings, use Enum for tags
                         if tags.0.contains(&"player") || tags.0.contains(&"player_weapon") {
                             player_score.increment(points.0);
                         }
