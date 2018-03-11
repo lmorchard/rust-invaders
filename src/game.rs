@@ -15,7 +15,9 @@ pub fn init<'a, 'b>(
         spawn_asteroid(world);
     }
 
-    dispatcher.add(CollisionMatchSystem, "collision_match", &[])
+    dispatcher
+        .add(DespawnMatchSystem, "despawn_match", &[])
+        .add(CollisionMatchSystem, "collision_match", &[])
 }
 
 pub fn update(world: &mut World) -> GameResult<()> {
@@ -144,8 +146,73 @@ pub fn spawn_asteroid(world: &mut World) {
         //})
         .with(health_damage::Health::new(100.0))
         .with(score::PointsOnLastHit(1000))
-        .with(despawn::Tombstone)
         .build();
+}
+
+pub struct DespawnMatchSystem;
+impl<'a> System<'a> for DespawnMatchSystem {
+    type SystemData = (
+        Entities<'a>,
+        Fetch<'a, LazyUpdate>,
+        Fetch<'a, despawn::DespawnEventQueue>,
+        ReadStorage<'a, metadata::Tags>,
+        ReadStorage<'a, position_motion::Position>,
+        ReadStorage<'a, sprites::Sprite>,
+    );
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities, lazy, despawn_events, tags, positions, sprites) = data;
+        for despawn_event in &despawn_events.0 {
+            let entity = despawn_event.entity;
+            if let (Some(tags), Some(position), Some(sprite)) =
+                (tags.get(entity), positions.get(entity), sprites.get(entity))
+            {
+                for &tag in &tags.0 {
+                    self.handle_match(&entities, &lazy, &despawn_event, tag, &position, &sprite);
+                }
+            }
+        }
+    }
+}
+impl DespawnMatchSystem {
+    fn handle_match(
+        &mut self,
+        entities: &Entities,
+        lazy: &LazyUpdate,
+        despawn_event: &despawn::DespawnEvent,
+        tag: &str,
+        position: &position_motion::Position,
+        sprite: &sprites::Sprite,
+    ) {
+        if despawn_event.reason == despawn::DespawnReason::Health {
+            if tag == "asteroid" {
+                let explosion = entities.create();
+                lazy.insert(explosion, despawn::Timeout(0.5));
+                lazy.insert(
+                    explosion,
+                    position_motion::Position {
+                        x: position.x,
+                        y: position.y,
+                        ..Default::default()
+                    },
+                );
+                lazy.insert(
+                    explosion,
+                    position_motion::Velocity {
+                        r: PI * 7.0,
+                        ..Default::default()
+                    },
+                );
+                lazy.insert(
+                    explosion,
+                    sprites::Sprite {
+                        shape: sprites::Shape::Explosion,
+                        scale: Point2::new(sprite.scale.x, sprite.scale.y),
+                        ..Default::default()
+                    },
+                );
+            }
+        }
+    }
 }
 
 pub struct CollisionMatchSystem;
@@ -165,7 +232,7 @@ impl<'a> System<'a> for CollisionMatchSystem {
                     for b_entity in ent_collisions.iter() {
                         if let Some(b_tags) = tags.get(*b_entity) {
                             for &b_tag in &b_tags.0 {
-                                self.handle_collision(
+                                self.handle_match(
                                     &mut player_score,
                                     &a_tag,
                                     &b_tag,
@@ -181,7 +248,7 @@ impl<'a> System<'a> for CollisionMatchSystem {
     }
 }
 impl CollisionMatchSystem {
-    fn handle_collision(
+    fn handle_match(
         &mut self,
         player_score: &mut score::PlayerScore,
         a_tag: &str,

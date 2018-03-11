@@ -4,20 +4,16 @@ use specs::*;
 use plugins::*;
 use DeltaTime;
 
-use std::f32::consts::PI;
-
 pub fn init<'a, 'b>(
     world: &mut World,
     dispatcher: DispatcherBuilder<'a, 'b>,
 ) -> DispatcherBuilder<'a, 'b> {
     world.add_resource(DespawnEventQueue::new());
     world.register::<Timeout>();
-    world.register::<Tombstone>();
     world.register::<DespawnBounds>();
     world.register::<DespawnOnCollision>();
     dispatcher
         .add(TimeoutSystem, "timeout_system", &[])
-        .add(TombstoneSystem, "tombstone_system", &[])
         .add(DespawnBoundsSystem, "despawn_bounds_system", &[])
         .add(
             DespawnOnCollisionSystem,
@@ -33,8 +29,7 @@ pub fn update(world: &mut World) -> GameResult<()> {
         if let Err(err) = entities.delete(despawn_event.entity) {
             return Err(GameError::UnknownError(format!(
                 "Failed to delete despawning entity {:?} - {:?}",
-                despawn_event.entity,
-                err
+                despawn_event.entity, err
             )));
         }
     }
@@ -42,9 +37,20 @@ pub fn update(world: &mut World) -> GameResult<()> {
     Ok(())
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum DespawnReason {
+    Timeout,
+    Collision,
+    SelfDestruct,
+    Health,
+    OutOfBounds,
+    Other(&'static str),
+}
+
 #[derive(Debug, Eq, PartialEq)]
 pub struct DespawnEvent {
     pub entity: Entity,
+    pub reason: DespawnReason,
 }
 
 #[derive(Debug)]
@@ -62,9 +68,7 @@ impl Default for DespawnEventQueue {
 
 #[derive(Component, Debug)]
 pub struct DespawnBounds(pub Rect);
-
 pub struct DespawnBoundsSystem;
-
 impl<'a> System<'a> for DespawnBoundsSystem {
     type SystemData = (
         Entities<'a>,
@@ -80,7 +84,10 @@ impl<'a> System<'a> for DespawnBoundsSystem {
             if pos.x < bounds.x || pos.x > bounds.x + bounds.w || pos.y < bounds.y
                 || pos.y > bounds.y + bounds.h
             {
-                despawn_events.0.push(DespawnEvent { entity });
+                despawn_events.0.push(DespawnEvent {
+                    entity,
+                    reason: DespawnReason::OutOfBounds,
+                });
             }
         }
     }
@@ -88,7 +95,6 @@ impl<'a> System<'a> for DespawnBoundsSystem {
 
 #[derive(Component, Debug)]
 pub struct DespawnOnCollision;
-
 pub struct DespawnOnCollisionSystem;
 impl<'a> System<'a> for DespawnOnCollisionSystem {
     type SystemData = (
@@ -101,7 +107,10 @@ impl<'a> System<'a> for DespawnOnCollisionSystem {
         let (entities, collisions, mut despawn_events, on_collisions) = data;
         for (entity, _on_collision) in (&*entities, &on_collisions).join() {
             if collisions.get(&entity).is_some() {
-                despawn_events.0.push(despawn::DespawnEvent { entity });
+                despawn_events.0.push(DespawnEvent {
+                    entity,
+                    reason: DespawnReason::Collision,
+                });
             }
         }
     }
@@ -109,9 +118,7 @@ impl<'a> System<'a> for DespawnOnCollisionSystem {
 
 #[derive(Component, Debug)]
 pub struct Timeout(pub f32);
-
 pub struct TimeoutSystem;
-
 impl<'a> System<'a> for TimeoutSystem {
     type SystemData = (
         Entities<'a>,
@@ -125,60 +132,11 @@ impl<'a> System<'a> for TimeoutSystem {
         for (entity, mut timeout) in (&*entities, &mut timeouts).join() {
             timeout.0 -= delta;
             if timeout.0 <= 0.0 {
-                despawn_events.0.push(DespawnEvent { entity });
+                despawn_events.0.push(DespawnEvent {
+                    entity,
+                    reason: DespawnReason::Timeout,
+                });
             }
-        }
-    }
-}
-
-#[derive(Component, Debug)]
-pub struct Tombstone;
-
-pub struct TombstoneSystem;
-
-impl<'a> System<'a> for TombstoneSystem {
-    type SystemData = (
-        Entities<'a>,
-        Fetch<'a, LazyUpdate>,
-        Fetch<'a, DespawnEventQueue>,
-        ReadStorage<'a, sprites::Sprite>,
-        ReadStorage<'a, position_motion::Position>,
-        ReadStorage<'a, Tombstone>,
-    );
-    fn run(&mut self, data: Self::SystemData) {
-        let (entities, lazy, despawn_events, sprites, positions, tombstones) = data;
-        for (entity, sprite, position, _tombstone) in
-            (&*entities, &sprites, &positions, &tombstones).join()
-        {
-            if !despawn_events.0.contains(&DespawnEvent { entity }) {
-                continue;
-            }
-            // TODO: Implement multiple tombstone selections beyond explosions
-            let tombstone = entities.create();
-            lazy.insert(tombstone, Timeout(0.5));
-            lazy.insert(
-                tombstone,
-                position_motion::Position {
-                    x: position.x,
-                    y: position.y,
-                    ..Default::default()
-                },
-            );
-            lazy.insert(
-                tombstone,
-                position_motion::Velocity {
-                    r: PI * 7.0,
-                    ..Default::default()
-                },
-            );
-            lazy.insert(
-                tombstone,
-                sprites::Sprite {
-                    shape: sprites::Shape::Explosion,
-                    scale: Point2::new(sprite.scale.x, sprite.scale.y),
-                    ..Default::default()
-                },
-            );
         }
     }
 }

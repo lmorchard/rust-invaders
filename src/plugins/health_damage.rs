@@ -103,7 +103,10 @@ impl<'a> System<'a> for DamageOnCollisionSystem {
                         continue;
                     }
                     if damage.despawn {
-                        despawn_events.0.push(despawn::DespawnEvent { entity: ent });
+                        despawn_events.0.push(despawn::DespawnEvent {
+                            entity: ent,
+                            reason: despawn::DespawnReason::SelfDestruct,
+                        });
                     }
                     damage_events.0.push(DamageEvent {
                         from: ent,
@@ -135,7 +138,10 @@ impl<'a> System<'a> for HealthSystem {
         damage_events.0.clear();
         for (entity, health) in (&*entities, &mut healths).join() {
             if health.health <= 0.0 {
-                despawn_events.0.push(despawn::DespawnEvent { entity });
+                despawn_events.0.push(despawn::DespawnEvent {
+                    entity,
+                    reason: despawn::DespawnReason::Health,
+                });
             }
         }
     }
