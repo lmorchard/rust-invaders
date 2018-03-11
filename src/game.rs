@@ -15,13 +15,51 @@ pub fn init<'a, 'b>(
         spawn_asteroid(world);
     }
 
-    world.add_resource(PlayerScore(0));
+    world.add_resource(PlayerScore::new());
     dispatcher
         .add(CollisionMatchSystem, "collision_match", &[])
 }
 
 #[derive(Debug)]
-pub struct PlayerScore(pub i32);
+pub struct PlayerScore {
+    current: i32,
+    displayed: i32
+}
+impl PlayerScore {
+    pub fn new() -> PlayerScore {
+        PlayerScore {
+            current: 0,
+            displayed: 0
+        }
+    }
+    pub fn get(&self) -> i32 {
+        self.current
+    }
+    pub fn set(&mut self, new_score: i32) {
+        self.current = new_score;
+    }
+    pub fn increment(&mut self, amount: i32) {
+        self.current += amount;
+    }
+    pub fn decrement(&mut self, amount: i32) {
+        self.current += amount;
+    }
+    pub fn get_displayed(&self) -> i32 {
+        self.displayed
+    }
+    pub fn update_displayed(&mut self) {
+        if self.displayed == self.current {
+            return;
+        }
+        let incr = 1 + (self.current - self.displayed) / 10;
+        if self.displayed < self.current {
+            self.displayed += incr;
+        }
+        if self.displayed > self.current {
+            self.displayed = self.current;
+        }
+    }
+}
 
 pub fn update(world: &mut World) -> GameResult<()> {
     if rand::random::<f32>() < 0.025 {
@@ -31,10 +69,11 @@ pub fn update(world: &mut World) -> GameResult<()> {
 }
 
 pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> GameResult<()> {
-    let player_score = world.read_resource::<PlayerScore>();
+    let mut player_score = world.write_resource::<PlayerScore>();
+    player_score.update_displayed();
     font.draw(
         ctx,
-        &format!("{:07}", player_score.0),
+        &format!("{:07}", player_score.get_displayed()),
         fonts::DrawOptions {
             x: (PLAYFIELD_WIDTH / 2.0),
             y: 0.0 - (PLAYFIELD_HEIGHT / 2.0),
@@ -43,6 +82,7 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
             ..Default::default()
         },
     )?;
+
     Ok(())
 }
 
@@ -198,10 +238,11 @@ impl CollisionMatchSystem {
             }
             ("player_bullet", "enemy") => {
                 println!("PLAYER BULLET HIT ENEMY!");
-                *player_score = PlayerScore(player_score.0 + 100);
+                player_score.increment(1000);
             }
             ("asteroid", "asteroid") => {
                 println!("ASTEROID HIT ASTEROID");
+                player_score.increment(100);
             }
             (&_, _) => (),
         }
