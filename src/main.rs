@@ -24,7 +24,7 @@ pub fn main() {
         Err(e) => {
             println!("Could not load game!");
             println!("Error: {}", e);
-        },
+        }
         Ok(ref mut state) => {
             let (width, height) = graphics::get_size(ctx);
             update_screen_coordinates(ctx, state.zoom, width, height);
@@ -45,7 +45,10 @@ impl<'a, 'b> MainState<'a, 'b> {
     fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
         let mut font = fonts::Font::new(&fonts::FUTURAL);
         if let Err(err) = font.load() {
-            return Err(GameError::FontError(format!("Failed to load font: {:?}", err)));
+            return Err(GameError::FontError(format!(
+                "Failed to load font: {:?}",
+                err
+            )));
         }
 
         let mut world = World::new();
@@ -64,6 +67,7 @@ impl<'a, 'b> MainState<'a, 'b> {
         let dispatcher = position_motion::init(&mut world, dispatcher);
         let dispatcher = sprites::init(&mut world, dispatcher);
         let dispatcher = despawn::init(&mut world, dispatcher);
+        let dispatcher = score::init(&mut world, dispatcher);
         let dispatcher = game::init(&mut world, dispatcher);
         let dispatcher = dispatcher.build();
 
@@ -82,6 +86,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         update_delta_time(&mut self.world, ctx);
         game::update(&mut self.world)?;
         self.dispatcher.dispatch(&self.world.res);
+        score::update(&mut self.world)?;
         self.world.maintain();
         Ok(())
     }
@@ -91,6 +96,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         graphics::clear(ctx);
         graphics::set_color(ctx, graphics::WHITE)?;
         sprites::draw(&mut self.world, ctx)?;
+        score::draw(&mut self.world, &mut self.font, ctx)?;
         game::draw(&mut self.world, &mut self.font, ctx)?;
         graphics::present(ctx);
         Ok(())

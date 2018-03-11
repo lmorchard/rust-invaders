@@ -7,6 +7,7 @@ pub mod health_damage;
 pub mod metadata;
 pub mod player_control;
 pub mod position_motion;
+pub mod score;
 pub mod simple_physics;
 pub mod sprites;
 pub mod thruster;
