@@ -187,9 +187,7 @@ impl Font {
         if let Some(glyph) = self.glyphs.get(&c) {
             let mesh = self.meshes
                 .entry(c)
-                .or_insert_with(|| {
-                    build_mesh(ctx, scale, &glyph.lines)
-                });
+                .or_insert_with(|| build_mesh(ctx, scale, &glyph.lines));
             graphics::draw_ex(
                 ctx,
                 &*mesh,

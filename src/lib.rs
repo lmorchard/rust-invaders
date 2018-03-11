@@ -1,13 +1,18 @@
 extern crate ggez;
+#[macro_use]
+extern crate maplit;
 extern crate rand;
 extern crate specs;
 #[macro_use]
 extern crate specs_derive;
 
+use std::f32::consts::PI;
+
 use specs::*;
 use ggez::*;
-use ggez::graphics::Rect;
+use ggez::graphics::*;
 
+pub mod game;
 pub mod plugins;
 
 pub const PLAYFIELD_WIDTH: f32 = 1600.0;
