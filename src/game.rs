@@ -23,13 +23,15 @@ pub fn init<'a, 'b>(
 #[derive(Debug)]
 pub struct PlayerScore {
     current: i32,
-    displayed: i32
+    displayed: i32,
+    factor: i32,
 }
 impl PlayerScore {
     pub fn new() -> PlayerScore {
         PlayerScore {
             current: 0,
-            displayed: 0
+            displayed: 0,
+            factor: 10
         }
     }
     pub fn get(&self) -> i32 {
@@ -42,7 +44,10 @@ impl PlayerScore {
         self.current += amount;
     }
     pub fn decrement(&mut self, amount: i32) {
-        self.current += amount;
+        self.current -= amount;
+        if self.current < 0 {
+            self.current = 0;
+        }
     }
     pub fn get_displayed(&self) -> i32 {
         self.displayed
@@ -51,12 +56,19 @@ impl PlayerScore {
         if self.displayed == self.current {
             return;
         }
-        let incr = 1 + (self.current - self.displayed) / 10;
         if self.displayed < self.current {
+            let incr = 1 + (self.current - self.displayed) / self.factor;
             self.displayed += incr;
+            if self.displayed > self.current {
+                self.displayed = self.current;
+            }
         }
         if self.displayed > self.current {
-            self.displayed = self.current;
+            let decr = 1 + (self.displayed - self.current) / self.factor;
+            self.displayed -= decr;
+            if self.displayed < self.current {
+                self.displayed = self.current;
+            }
         }
     }
 }
@@ -76,7 +88,7 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
         &format!("{:07}", player_score.get_displayed()),
         fonts::DrawOptions {
             x: (PLAYFIELD_WIDTH / 2.0),
-            y: 0.0 - (PLAYFIELD_HEIGHT / 2.0),
+            y: 0.0 - (PLAYFIELD_HEIGHT / 2.0) + 24.0,
             scale: 3.0,
             reverse: true,
             ..Default::default()
@@ -243,6 +255,10 @@ impl CollisionMatchSystem {
             ("asteroid", "asteroid") => {
                 println!("ASTEROID HIT ASTEROID");
                 player_score.increment(100);
+            }
+            ("asteroid", "planet") => {
+                println!("ASTEROID HIT PLANET");
+                player_score.decrement(1000);
             }
             (&_, _) => (),
         }
