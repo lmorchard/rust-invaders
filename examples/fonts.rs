@@ -53,9 +53,7 @@ impl event::EventHandler for MainState {
             ctx,
             "Whoo yay!\nI like pie so much.\nLet's BBQ some things",
             fonts::DrawOptions {
-                x: 700.0,
-                y: 300.0,
-                scale: 1.5,
+                x: 800.0,
                 reverse: true,
                 ..Default::default()
             },

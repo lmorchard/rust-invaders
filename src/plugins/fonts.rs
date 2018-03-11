@@ -83,6 +83,7 @@ impl Default for DrawOptions {
             y: 0.0,
             scale: 1.0,
             reverse: false,
+            // TODO: add center option
             width: 100000.0,
         }
     }
@@ -183,21 +184,25 @@ impl Font {
         y: f32,
         rotation: f32,
     ) -> GameResult<()> {
-        let glyph = self.glyphs.get(&c).unwrap();
-        let mesh = self.meshes
-            .entry(c)
-            .or_insert_with(|| build_mesh(ctx, scale, &glyph.lines));
-        graphics::draw_ex(
-            ctx,
-            &*mesh,
-            DrawParam {
-                dest: Point2::new(x, y),
-                rotation,
-                offset: Point2::new(0.0, 0.0),
-                scale: Point2::new(scale, scale),
-                ..Default::default()
-            },
-        )
+        if let Some(glyph) = self.glyphs.get(&c) {
+            let mesh = self.meshes
+                .entry(c)
+                .or_insert_with(|| {
+                    build_mesh(ctx, scale, &glyph.lines)
+                });
+            graphics::draw_ex(
+                ctx,
+                &*mesh,
+                DrawParam {
+                    dest: Point2::new(x, y),
+                    rotation,
+                    offset: Point2::new(0.0, 0.0),
+                    scale: Point2::new(scale, scale),
+                    ..Default::default()
+                },
+            )?;
+        }
+        Ok(())
     }
 
     // TODO: Make this code more robust & failure tolerant, rather than just panic & bail
