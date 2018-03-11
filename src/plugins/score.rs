@@ -1,7 +1,6 @@
 use specs::*;
 use ggez::*;
 use plugins::*;
-use ::*;
 
 pub fn init<'a, 'b>(
     world: &mut World,
@@ -24,8 +23,8 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
         ctx,
         &format!("{:07}", player_score.get_displayed()),
         fonts::DrawOptions {
-            x: (PLAYFIELD_WIDTH / 2.0) - 24.0,
-            y: 0.0 - (PLAYFIELD_HEIGHT / 2.0) + 24.0,
+            x: (viewport::PLAYFIELD_WIDTH / 2.0) - 24.0,
+            y: 0.0 - (viewport::PLAYFIELD_HEIGHT / 2.0) + 24.0,
             scale: 3.0,
             reverse: true,
             ..Default::default()

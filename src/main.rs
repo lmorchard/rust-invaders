@@ -27,7 +27,7 @@ pub fn main() {
         }
         Ok(ref mut state) => {
             let (width, height) = graphics::get_size(ctx);
-            update_screen_coordinates(ctx, state.zoom, width, height);
+            viewport::update_screen_coordinates(&mut state.world, ctx, state.zoom, width, height);
             event::run(ctx, state).unwrap();
         }
     }
@@ -56,6 +56,7 @@ impl<'a, 'b> MainState<'a, 'b> {
         // TODO: This seems ugly, find a better pattern?
         let dispatcher = DispatcherBuilder::new();
         let dispatcher = init(&mut world, dispatcher);
+        let dispatcher = viewport::init(&mut world, dispatcher);
         let dispatcher = metadata::init(&mut world, dispatcher);
         let dispatcher = guns::init(&mut world, dispatcher);
         let dispatcher = thruster::init(&mut world, dispatcher);
@@ -84,6 +85,7 @@ impl<'a, 'b> MainState<'a, 'b> {
 impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         update_delta_time(&mut self.world, ctx);
+        viewport::update(&mut self.world, ctx)?;
         game::update(&mut self.world)?;
         self.dispatcher.dispatch(&self.world.res);
         score::update(&mut self.world)?;
@@ -96,6 +98,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         graphics::set_background_color(ctx, graphics::BLACK);
         graphics::clear(ctx);
         graphics::set_color(ctx, graphics::WHITE)?;
+        viewport::draw(&mut self.world, ctx)?;
         sprites::draw(&mut self.world, ctx)?;
         score::draw(&mut self.world, &mut self.font, ctx)?;
         game::draw(&mut self.world, &mut self.font, ctx)?;
@@ -104,7 +107,7 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     }
 
     fn resize_event(&mut self, ctx: &mut Context, width: u32, height: u32) {
-        update_screen_coordinates(ctx, self.zoom, width, height);
+        viewport::update_screen_coordinates(&mut self.world, ctx, self.zoom, width, height);
     }
 
     fn focus_event(&mut self, _ctx: &mut Context, gained: bool) {

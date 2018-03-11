@@ -11,3 +11,4 @@ pub mod score;
 pub mod simple_physics;
 pub mod sprites;
 pub mod thruster;
+pub mod viewport;
