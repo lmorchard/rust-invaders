@@ -1,9 +1,4 @@
-use std::collections::HashSet;
-use std::hash::Hash;
-use std::iter::FromIterator;
-
 use specs::*;
-use plugins::*;
 
 pub fn init<'a, 'b>(
     world: &mut World,
