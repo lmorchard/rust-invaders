@@ -7,7 +7,7 @@ use invaders::plugins::*;
 
 fn main() {
     let mut c = conf::Conf::new();
-    c.window_setup.title = String::from("Hershey - Rust Invaders!");
+    c.window_setup.title = String::from("Fonts - Rust Invaders!");
     c.window_setup.samples = conf::NumSamples::Eight;
     c.window_setup.resizable = true;
 
