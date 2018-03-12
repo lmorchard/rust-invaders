@@ -44,7 +44,7 @@ pub fn draw(world: &mut World, ctx: &mut Context) -> GameResult<()> {
         let mesh = sprite_cache
             .0
             .entry(ent)
-            .or_insert_with(|| sprites::build_mesh(shape, ctx, line_width));
+            .or_insert_with(|| shape.build_mesh(ctx, line_width));
         seen_entities.insert(ent);
 
         graphics::draw_ex(
@@ -95,21 +95,24 @@ pub enum Shape {
     Explosion,
     SimpleBullet,
     Planet,
+    PlanetIcon,
+}
+impl Shape {
+    pub fn build_mesh(&self, ctx: &mut Context, line_width: f32) -> Mesh {
+        match *self {
+            Shape::Explosion => explosion(ctx, line_width),
+            Shape::Player => player(ctx, line_width),
+            Shape::Asteroid => asteroid(ctx, line_width),
+            Shape::SimpleBullet => simple_bullet(ctx, line_width),
+            Shape::Planet => planet(ctx, line_width),
+            Shape::PlanetIcon => planet_icon(ctx, line_width),
+            _ => test(ctx, line_width),
+        }
+    }
 }
 impl Default for Shape {
     fn default() -> Shape {
         Shape::Test
-    }
-}
-
-pub fn build_mesh(shape: &Shape, ctx: &mut Context, line_width: f32) -> Mesh {
-    match *shape {
-        Shape::Explosion => explosion(ctx, line_width),
-        Shape::Player => player(ctx, line_width),
-        Shape::Asteroid => asteroid(ctx, line_width),
-        Shape::SimpleBullet => simple_bullet(ctx, line_width),
-        Shape::Planet => planet(ctx, line_width),
-        _ => test(ctx, line_width),
     }
 }
 
@@ -137,6 +140,18 @@ pub fn test(ctx: &mut Context, line_width: f32) -> Mesh {
         .circle(DrawMode::Line(line_width), Point2::new(0.5, 0.5), 0.5, 0.05)
         .line(&points![(0.4, 0.5), (0.6, 0.5)], line_width)
         .line(&points![(0.5, 0.4), (0.5, 0.6)], line_width)
+        .build(ctx)
+        .unwrap()
+}
+
+pub fn planet_icon(ctx: &mut Context, line_width: f32) -> Mesh {
+    MeshBuilder::new()
+        .circle(
+            DrawMode::Line(line_width),
+            Point2::new(0.5, 0.5),
+            0.5,
+            0.001,
+        )
         .build(ctx)
         .unwrap()
 }

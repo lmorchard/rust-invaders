@@ -1,5 +1,6 @@
 use specs::*;
 use plugins::*;
+use std::ops::Deref;
 
 pub fn init<'a, 'b>(
     world: &mut World,
@@ -16,6 +17,7 @@ pub fn init<'a, 'b>(
 #[derive(Component, Debug)]
 pub struct Health {
     pub health: f32,
+    pub max_health: f32,
     pub last_hurt_by: Option<Entity>,
     pub last_healed_by: Option<Entity>,
 }
@@ -23,6 +25,7 @@ impl Health {
     pub fn new(health: f32) -> Health {
         Health {
             health,
+            max_health: health,
             ..Default::default()
         }
     }
@@ -39,6 +42,7 @@ impl Default for Health {
     fn default() -> Health {
         Health {
             health: 100.0,
+            max_health: 100.0,
             last_hurt_by: None,
             last_healed_by: None,
         }
@@ -62,22 +66,54 @@ impl Default for DamageOnCollision {
 }
 
 #[derive(Debug)]
+pub enum DamagePolarity {
+    Hurt,
+    Heal,
+}
+#[derive(Debug)]
 pub struct DamageEvent {
     pub from: Entity,
     pub to: Entity,
     pub amount: f32,
+    pub polarity: DamagePolarity,
 }
 
 #[derive(Debug)]
 pub struct DamageEventQueue(pub Vec<DamageEvent>);
+impl Default for DamageEventQueue {
+    fn default() -> DamageEventQueue {
+        DamageEventQueue(Vec::new())
+    }
+}
+impl Deref for DamageEventQueue {
+    type Target = Vec<DamageEvent>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 impl DamageEventQueue {
     pub fn new() -> DamageEventQueue {
         Default::default()
     }
-}
-impl Default for DamageEventQueue {
-    fn default() -> DamageEventQueue {
-        DamageEventQueue(Vec::new())
+    pub fn hurt(&mut self, from: Entity, to: Entity, amount: f32) {
+        self.0.push(DamageEvent {
+            from,
+            to,
+            amount,
+            polarity: DamagePolarity::Hurt,
+        });
+    }
+    pub fn hurt_mutual(&mut self, a: Entity, b: Entity, amount: f32) {
+        self.hurt(a, b, amount);
+        self.hurt(b, a, amount);
+    }
+    pub fn heal(&mut self, from: Entity, to: Entity, amount: f32) {
+        self.0.push(DamageEvent {
+            from,
+            to,
+            amount: 0.0 - amount,
+            polarity: DamagePolarity::Heal,
+        });
     }
 }
 
@@ -103,16 +139,9 @@ impl<'a> System<'a> for DamageOnCollisionSystem {
                         continue;
                     }
                     if damage.despawn {
-                        despawn_events.0.push(despawn::DespawnEvent {
-                            entity: ent,
-                            reason: despawn::DespawnReason::SelfDestruct,
-                        });
+                        despawn_events.despawn(ent, despawn::DespawnReason::SelfDestruct);
                     }
-                    damage_events.0.push(DamageEvent {
-                        from: ent,
-                        to: *other_ent,
-                        amount: damage.damage,
-                    });
+                    damage_events.hurt(ent, *other_ent, damage.damage);
                 }
             }
         }
@@ -138,10 +167,7 @@ impl<'a> System<'a> for HealthSystem {
         damage_events.0.clear();
         for (entity, health) in (&*entities, &mut healths).join() {
             if health.health <= 0.0 {
-                despawn_events.0.push(despawn::DespawnEvent {
-                    entity,
-                    reason: despawn::DespawnReason::Health,
-                });
+                despawn_events.despawn(entity, despawn::DespawnReason::Health);
             }
         }
     }

@@ -23,8 +23,8 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
         ctx,
         &format!("{:07}", player_score.get_displayed()),
         fonts::DrawOptions {
-            x: (viewport::PLAYFIELD_WIDTH / 2.0) - 24.0,
-            y: 0.0 - (viewport::PLAYFIELD_HEIGHT / 2.0) + 24.0,
+            x: (viewport::PLAYFIELD_WIDTH / 2.0) - 25.0,
+            y: 0.0 - (viewport::PLAYFIELD_HEIGHT / 2.0) + 25.0,
             scale: 3.0,
             reverse: true,
             ..Default::default()
@@ -44,9 +44,18 @@ impl<'a> System<'a> for PointsOnLastHitSystem {
         ReadStorage<'a, PointsOnLastHit>,
         ReadStorage<'a, health_damage::Health>,
         ReadStorage<'a, metadata::Tags>,
+        ReadStorage<'a, sprites::Sprite>,
     );
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut player_score, despawn_events, points_on_last_hits, healths, tags) = data;
+        let (
+            entities,
+            mut player_score,
+            despawn_events,
+            points_on_last_hits,
+            healths,
+            tags,
+            sprites,
+        ) = data;
         for despawn_event in &despawn_events.0 {
             let entity = despawn_event.entity;
             if let (Some(points), Some(health)) =

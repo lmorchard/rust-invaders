@@ -9,6 +9,9 @@ pub fn init<'a, 'b>(
     world: &mut World,
     dispatcher: DispatcherBuilder<'a, 'b>,
 ) -> DispatcherBuilder<'a, 'b> {
+    world.register::<HeroPlanet>();
+    world.register::<HeroPlayer>();
+
     spawn_planet(world);
     spawn_player(world);
     for _idx in 0..10 {
@@ -20,14 +23,84 @@ pub fn init<'a, 'b>(
         .add(CollisionMatchSystem, "collision_match", &[])
 }
 
+#[derive(Component, Debug)]
+pub struct HeroPlayer;
+
+#[derive(Component, Debug)]
+pub struct HeroPlanet;
+
 pub fn update(world: &mut World) -> GameResult<()> {
     if rand::random::<f32>() < 0.025 {
         spawn_asteroid(world);
     }
+
     Ok(())
 }
 
 pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> GameResult<()> {
+    let scale = 50.0;
+    let perc_scale = 4.0;
+    let base_x = (viewport::PLAYFIELD_WIDTH / 2.0) - (scale * 1.25);
+    let base_y = 0.0 - (viewport::PLAYFIELD_HEIGHT / 2.0) + (scale * 2.5);
+
+    let planets = world.read::<HeroPlanet>();
+    let planet_healths = world.read::<health_damage::Health>();
+
+    for (health, planet) in (&planet_healths, &planets).join() {
+        let perc = 100.0 * (health.health / health.max_health);
+        let mesh = sprites::Shape::PlanetIcon.build_mesh(ctx, 1.0 / scale);
+        graphics::draw_ex(
+            ctx,
+            &mesh,
+            DrawParam {
+                dest: Point2::new(base_x, base_y),
+                rotation: 0.0,
+                offset: Point2::new(0.5, 0.5),
+                scale: Point2::new(scale, scale),
+                ..Default::default()
+            },
+        )?;
+        graphics::rectangle(
+            ctx,
+            graphics::DrawMode::Line(1.0),
+            Rect::new(
+                base_x - (scale / 2.0),
+                base_y + (scale * 1.125),
+                scale,
+                perc_scale * perc,
+            ),
+        )?;
+    }
+
+    let players = world.read::<HeroPlayer>();
+    let player_healths = world.read::<health_damage::Health>();
+
+    for (health, player) in (&player_healths, &players).join() {
+        let perc = 100.0 * (health.health / health.max_health);
+        let mesh = sprites::Shape::Player.build_mesh(ctx, 1.0 / scale);
+        graphics::draw_ex(
+            ctx,
+            &mesh,
+            DrawParam {
+                dest: Point2::new(base_x - (scale * 1.25), base_y),
+                rotation: 0.0,
+                offset: Point2::new(0.5, 0.5),
+                scale: Point2::new(scale, scale),
+                ..Default::default()
+            },
+        )?;
+        graphics::rectangle(
+            ctx,
+            graphics::DrawMode::Line(1.0),
+            Rect::new(
+                base_x - (scale / 2.0) - (scale * 1.25),
+                base_y + (scale * 1.125),
+                scale,
+                perc_scale * perc,
+            ),
+        )?;
+    }
+
     Ok(())
 }
 
@@ -36,6 +109,7 @@ pub fn spawn_player(world: &mut World) {
         .create_entity()
         .with(metadata::Name("player"))
         .with(metadata::Tags::new(vec!["player", "friend"]))
+        .with(HeroPlayer)
         .with(position_motion::Position {
             y: (viewport::PLAYFIELD_HEIGHT / 2.0) - 200.0,
             ..Default::default()
@@ -69,11 +143,7 @@ pub fn spawn_player(world: &mut World) {
         })
         .with(collision::Collidable { size: 50.0 })
         .with(bounce::BounceOnCollision { mass: 5.0 })
-        .with(health_damage::DamageOnCollision {
-            damage: 100.0,
-            despawn: false,
-            ..Default::default()
-        })
+        .with(health_damage::Health::new(1000.0))
         .with(sprites::Sprite {
             shape: sprites::Shape::Player,
             scale: Point2::new(50.0, 50.0),
@@ -86,6 +156,7 @@ pub fn spawn_player(world: &mut World) {
 pub fn spawn_planet(world: &mut World) {
     world
         .create_entity()
+        .with(HeroPlanet)
         .with(metadata::Tags::new(vec!["planet", "friend"]))
         .with(position_motion::Position {
             x: 0.0,
@@ -105,12 +176,7 @@ pub fn spawn_planet(world: &mut World) {
         .with(simple_physics::SpeedLimit(0.0))
         .with(simple_physics::Friction(100000.0))
         .with(bounce::BounceOnCollision { mass: 100000.0 })
-        .with(health_damage::DamageOnCollision {
-            damage: 100000.0,
-            despawn: false,
-            ..Default::default()
-        })
-        .with(health_damage::Health::new(100000.0))
+        .with(health_damage::Health::new(5000.0))
         .build();
 }
 
@@ -129,11 +195,15 @@ pub fn spawn_asteroid(world: &mut World) {
     world
         .create_entity()
         .with(metadata::Tags::new(vec!["asteroid", "enemy"]))
-        .with(position_motion::Position { x, y, ..Default::default() })
+        .with(position_motion::Position {
+            x,
+            y,
+            ..Default::default()
+        })
         .with(position_motion::Velocity {
             x: 50.0 - 100.0 * rand::random::<f32>(),
             y: 50.0 + 100.0 * rand::random::<f32>(),
-            r: PI * rand::random::<f32>()
+            r: PI * rand::random::<f32>(),
         })
         .with(collision::Collidable { size })
         .with(bounce::BounceOnCollision {
@@ -144,17 +214,19 @@ pub fn spawn_asteroid(world: &mut World) {
             scale: Point2::new(size, size),
             ..Default::default()
         })
+        /*
+        .with(health_damage::DamageOnCollision {
+            damage: 50.0,
+            despawn: false,
+            ..Default::default()
+        })
+        */
         .with(despawn::DespawnBounds(Rect::new(
             0.0 - HW - 200.0,
             0.0 - HH - 200.0,
             viewport::PLAYFIELD_WIDTH + 400.0,
             viewport::PLAYFIELD_HEIGHT + 400.0,
         )))
-        .with(health_damage::DamageOnCollision {
-            damage: 50.0,
-            despawn: false,
-            ..Default::default()
-        })
         .with(health_damage::Health::new(100.0))
         .with(score::PointsOnLastHit(1000))
         .build();
@@ -230,14 +302,25 @@ pub struct CollisionMatchSystem;
 impl<'a> System<'a> for CollisionMatchSystem {
     type SystemData = (
         Entities<'a>,
+        Fetch<'a, LazyUpdate>,
         FetchMut<'a, score::PlayerScore>,
         Fetch<'a, collision::Collisions>,
         FetchMut<'a, health_damage::DamageEventQueue>,
+        FetchMut<'a, despawn::DespawnEventQueue>,
         FetchMut<'a, viewport::ViewportState>,
         ReadStorage<'a, metadata::Tags>,
     );
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut player_score, collisions, mut damage, mut viewport, tags) = data;
+        let (
+            entities,
+            lazy,
+            mut player_score,
+            collisions,
+            mut damages,
+            mut despawns,
+            mut viewport,
+            tags,
+        ) = data;
         for (a_entity, a_tags) in (&*entities, &tags).join() {
             for &a_tag in &a_tags.0 {
                 if let Some(ent_collisions) = collisions.get(&a_entity) {
@@ -245,7 +328,10 @@ impl<'a> System<'a> for CollisionMatchSystem {
                         if let Some(b_tags) = tags.get(*b_entity) {
                             for &b_tag in &b_tags.0 {
                                 self.handle_match(
+                                    &lazy,
                                     &mut player_score,
+                                    &mut damages,
+                                    &mut despawns,
                                     &mut viewport,
                                     &a_tag,
                                     &b_tag,
@@ -263,7 +349,10 @@ impl<'a> System<'a> for CollisionMatchSystem {
 impl CollisionMatchSystem {
     fn handle_match(
         &mut self,
+        lazy: &LazyUpdate,
         player_score: &mut score::PlayerScore,
+        damages: &mut health_damage::DamageEventQueue,
+        despawns: &mut despawn::DespawnEventQueue,
         viewport: &mut viewport::ViewportState,
         a_tag: &str,
         b_tag: &str,
@@ -271,11 +360,19 @@ impl CollisionMatchSystem {
         b_entity: &Entity,
     ) {
         match (a_tag, b_tag) {
-            ("player", "enemy") | ("asteroid", "planet") => {
-                viewport.shake(7.0, 0.15);
+            ("asteroid", "player") => {
+                damages.hurt_mutual(*a_entity, *b_entity, 100.0);
+                viewport.shake(8.0, 0.2);
+            }
+            ("asteroid", "planet") => {
+                damages.hurt_mutual(*a_entity, *b_entity, 100.0);
+                viewport.shake(8.0, 0.2);
+            }
+            ("asteroid", "asteroid") => {
+                damages.hurt_mutual(*a_entity, *b_entity, 100.0);
             }
             ("player_bullet", "enemy") => {
-                // player_score.increment(1000);
+                damages.hurt_mutual(*a_entity, *b_entity, 100.0);
             }
             (&_, _) => (),
         }

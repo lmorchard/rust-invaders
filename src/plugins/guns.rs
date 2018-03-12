@@ -52,7 +52,10 @@ impl<'a> System<'a> for GunSystem {
             gun.cooldown = gun.period;
 
             let bullet = entities.create();
-            lazy.insert(bullet, metadata::Tags::new(vec!["player_weapon"]));
+            lazy.insert(
+                bullet,
+                metadata::Tags::new(vec!["player_bullet", "player_weapon"]),
+            );
             lazy.insert(
                 bullet,
                 position_motion::Position {
@@ -69,14 +72,7 @@ impl<'a> System<'a> for GunSystem {
                 },
             );
             lazy.insert(bullet, collision::Collidable { size: 50.0 });
-            lazy.insert(
-                bullet,
-                health_damage::DamageOnCollision {
-                    damage: 100.0,
-                    exclude: vec![entity],
-                    ..Default::default()
-                },
-            );
+            lazy.insert(bullet, health_damage::Health::new(10.0));
             lazy.insert(
                 bullet,
                 despawn::DespawnBounds(Rect::new(-800.0, -550.0, 1600.0, 1000.0)),

@@ -1,4 +1,5 @@
 use specs::*;
+use std::ops::Deref;
 
 pub fn init<'a, 'b>(
     world: &mut World,
@@ -19,5 +20,11 @@ pub struct Tags(pub Vec<&'static str>);
 impl Tags {
     pub fn new(tags: Vec<&'static str>) -> Tags {
         Tags(tags)
+    }
+}
+impl Deref for Tags {
+    type Target = Vec<&'static str>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

@@ -2,6 +2,7 @@ use ggez::*;
 use ggez::graphics::*;
 use specs::*;
 use plugins::*;
+use std::ops::Deref;
 use DeltaTime;
 
 pub fn init<'a, 'b>(
@@ -55,14 +56,23 @@ pub struct DespawnEvent {
 
 #[derive(Debug)]
 pub struct DespawnEventQueue(pub Vec<DespawnEvent>);
+impl Default for DespawnEventQueue {
+    fn default() -> DespawnEventQueue {
+        DespawnEventQueue(Vec::new())
+    }
+}
+impl Deref for DespawnEventQueue {
+    type Target = Vec<DespawnEvent>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 impl DespawnEventQueue {
     pub fn new() -> DespawnEventQueue {
         Default::default()
     }
-}
-impl Default for DespawnEventQueue {
-    fn default() -> DespawnEventQueue {
-        DespawnEventQueue(Vec::new())
+    pub fn despawn(&mut self, entity: Entity, reason: DespawnReason) {
+        self.0.push(DespawnEvent { entity, reason });
     }
 }
 
@@ -84,10 +94,7 @@ impl<'a> System<'a> for DespawnBoundsSystem {
             if pos.x < bounds.x || pos.x > bounds.x + bounds.w || pos.y < bounds.y
                 || pos.y > bounds.y + bounds.h
             {
-                despawn_events.0.push(DespawnEvent {
-                    entity,
-                    reason: DespawnReason::OutOfBounds,
-                });
+                despawn_events.despawn(entity, DespawnReason::OutOfBounds);
             }
         }
     }
@@ -107,10 +114,7 @@ impl<'a> System<'a> for DespawnOnCollisionSystem {
         let (entities, collisions, mut despawn_events, on_collisions) = data;
         for (entity, _on_collision) in (&*entities, &on_collisions).join() {
             if collisions.get(&entity).is_some() {
-                despawn_events.0.push(DespawnEvent {
-                    entity,
-                    reason: DespawnReason::Collision,
-                });
+                despawn_events.despawn(entity, DespawnReason::Collision);
             }
         }
     }
@@ -132,10 +136,7 @@ impl<'a> System<'a> for TimeoutSystem {
         for (entity, mut timeout) in (&*entities, &mut timeouts).join() {
             timeout.0 -= delta;
             if timeout.0 <= 0.0 {
-                despawn_events.0.push(DespawnEvent {
-                    entity,
-                    reason: DespawnReason::Timeout,
-                });
+                despawn_events.despawn(entity, DespawnReason::Timeout);
             }
         }
     }

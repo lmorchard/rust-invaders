@@ -60,7 +60,13 @@ impl ViewportState {
     }
 }
 
-pub fn update_screen_coordinates(world: &mut World, ctx: &mut Context, zoom: f32, width: u32, height: u32) {
+pub fn update_screen_coordinates(
+    world: &mut World,
+    ctx: &mut Context,
+    zoom: f32,
+    width: u32,
+    height: u32,
+) {
     let width = width as f32;
     let height = height as f32;
 
@@ -78,5 +84,10 @@ pub fn update_screen_coordinates(world: &mut World, ctx: &mut Context, zoom: f32
     let (visible_x, visible_y) = (0.0 - (visible_width / 2.0), 0.0 - (visible_height / 2.0));
 
     let mut viewport_state = world.write_resource::<ViewportState>();
-    viewport_state.set_screen(Rect::new(visible_x, visible_y, visible_width, visible_height));
+    viewport_state.set_screen(Rect::new(
+        visible_x,
+        visible_y,
+        visible_width,
+        visible_height,
+    ));
 }
