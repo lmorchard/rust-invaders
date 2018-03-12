@@ -40,6 +40,7 @@ pub fn draw(world: &mut World, ctx: &mut Context) -> GameResult<()> {
 #[derive(Debug)]
 pub struct ViewportState {
     pub screen: Rect,
+    pub zoom: f32,
     pub shake: f32,
     pub shake_duration: f32,
 }
@@ -47,6 +48,7 @@ impl ViewportState {
     pub fn new() -> ViewportState {
         ViewportState {
             screen: Rect::new(0.0, 0.0, 100.0, 100.0),
+            zoom: 1.0,
             shake: 0.0,
             shake_duration: 0.0,
         }
@@ -58,36 +60,44 @@ impl ViewportState {
         self.shake = shake;
         self.shake_duration = shake_duration;
     }
-}
+    pub fn increase_zoom(&mut self, amount: f32) {
+        self.zoom += amount;
+        let (w, h) = {
+            let screen = self.screen;
+            (screen.w, screen.h)
+        };
+        self.update_screen(w, h);
+    }
+    pub fn decrease_zoom(&mut self, amount: f32) {
+        self.zoom -= amount;
+        if self.zoom <= 0.0 {
+            self.zoom = 0.1;
+        }
+        let (w, h) = {
+            let screen = self.screen;
+            (screen.w, screen.h)
+        };
+        self.update_screen(w, h);
+    }
+    pub fn update_screen(&mut self, width: f32, height: f32) {
+        let screen_ratio = width / height;
+        let fit_ratio = if screen_ratio < PLAYFIELD_RATIO {
+            PLAYFIELD_WIDTH / width
+        } else {
+            PLAYFIELD_HEIGHT / height
+        };
 
-pub fn update_screen_coordinates(
-    world: &mut World,
-    ctx: &mut Context,
-    zoom: f32,
-    width: u32,
-    height: u32,
-) {
-    let width = width as f32;
-    let height = height as f32;
+        let (visible_width, visible_height) = (
+            width * fit_ratio * (1.0 / self.zoom),
+            height * fit_ratio * (1.0 / self.zoom),
+        );
+        let (visible_x, visible_y) = (0.0 - (visible_width / 2.0), 0.0 - (visible_height / 2.0));
 
-    let screen_ratio = width / height;
-    let fit_ratio = if screen_ratio < PLAYFIELD_RATIO {
-        PLAYFIELD_WIDTH / width
-    } else {
-        PLAYFIELD_HEIGHT / height
-    };
-
-    let (visible_width, visible_height) = (
-        width as f32 * fit_ratio * (1.0 / zoom),
-        height as f32 * fit_ratio * (1.0 / zoom),
-    );
-    let (visible_x, visible_y) = (0.0 - (visible_width / 2.0), 0.0 - (visible_height / 2.0));
-
-    let mut viewport_state = world.write_resource::<ViewportState>();
-    viewport_state.set_screen(Rect::new(
-        visible_x,
-        visible_y,
-        visible_width,
-        visible_height,
-    ));
+        self.screen = Rect::new(
+            visible_x,
+            visible_y,
+            visible_width,
+            visible_height,
+        );
+    }
 }

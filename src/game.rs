@@ -23,6 +23,27 @@ pub fn init<'a, 'b>(
         .add(CollisionMatchSystem, "collision_match", &[])
 }
 
+/*
+        Keycode::Escape => {
+            let entities = world.entities();
+            for entity in entities.join() {
+                entities.delete(entity);
+            }
+        },
+        Keycode::Tab => {
+            let entities = world.entities();
+            for (entity, tags) in (
+                &*entities,
+                &world.read::<metadata::Tags>()
+            ).join()
+            {
+                if tags.0.contains(&"enemy") {
+                    entities.delete(entity);
+                }
+            }
+        },
+*/
+
 #[derive(Component, Debug)]
 pub struct HeroPlayer;
 
@@ -151,7 +172,7 @@ pub fn spawn_player(world: &mut World) {
             },
         }))
         .with(guns::Gun {
-            period: 0.3,
+            period: 0.2,
             ..Default::default()
         })
         .with(collision::Collidable { size: 50.0 })
@@ -368,14 +389,14 @@ impl CollisionMatchSystem {
         match (a_tag, b_tag) {
             ("asteroid", "player") => {
                 damages.hurt_mutual(*a_entity, *b_entity, 100.0);
-                viewport.shake(8.0, 0.2);
+                viewport.shake(16.0, 0.3);
             }
             ("asteroid", "planet") => {
                 damages.hurt_mutual(*a_entity, *b_entity, 100.0);
-                viewport.shake(8.0, 0.2);
+                viewport.shake(16.0, 0.3);
             }
             ("asteroid", "asteroid") => {
-                damages.hurt_mutual(*a_entity, *b_entity, 100.0);
+                damages.hurt_mutual(*a_entity, *b_entity, 10.0);
             }
             ("player_bullet", "enemy") => {
                 damages.hurt_mutual(*a_entity, *b_entity, 100.0);

@@ -33,13 +33,15 @@ pub fn draw(world: &mut World, ctx: &mut Context) -> GameResult<()> {
     let entities = world.entities();
     let positions = world.read::<position_motion::Position>();
     let sprites = world.read::<Sprite>();
+    let viewport_state = world.read_resource::<viewport::ViewportState>();
     let mut sprite_cache = world.write_resource::<SpriteCache>();
 
     let mut seen_entities: HashSet<Entity> = HashSet::new();
 
     for (ent, pos, spr) in (&*entities, &positions, &sprites).join() {
         let shape = &spr.shape;
-        let line_width = 1.0 / spr.scale.x;
+        // TODO: Figure out a way to change line_width on zoom change without rebuilding all meshes
+        let line_width = 1.0 / spr.scale.x; // / viewport_state.zoom;
 
         let mesh = sprite_cache
             .0

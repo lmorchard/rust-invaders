@@ -26,8 +26,11 @@ pub fn main() {
             println!("Error: {}", e);
         }
         Ok(ref mut state) => {
-            let (width, height) = graphics::get_size(ctx);
-            viewport::update_screen_coordinates(&mut state.world, ctx, state.zoom, width, height);
+            {
+                let (width, height) = graphics::get_size(ctx);
+                let mut viewport_state = state.world.write_resource::<viewport::ViewportState>();
+                viewport_state.update_screen(width as f32, height as f32);
+            }
             event::run(ctx, state).unwrap();
         }
     }
@@ -36,13 +39,11 @@ pub fn main() {
 pub struct MainState<'a, 'b> {
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
-    paused: bool,
-    zoom: f32,
     font: plugins::fonts::Font,
 }
 
 impl<'a, 'b> MainState<'a, 'b> {
-    fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
+    fn new(_ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
         let mut font = fonts::Font::new(&fonts::FUTURAL);
         if let Err(err) = font.load() {
             return Err(GameError::FontError(format!(
@@ -76,8 +77,6 @@ impl<'a, 'b> MainState<'a, 'b> {
             font,
             world,
             dispatcher,
-            paused: false,
-            zoom: 1.0,
         })
     }
 }
@@ -106,15 +105,23 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         Ok(())
     }
 
-    fn resize_event(&mut self, ctx: &mut Context, width: u32, height: u32) {
-        viewport::update_screen_coordinates(&mut self.world, ctx, self.zoom, width, height);
+    fn resize_event(&mut self, _ctx: &mut Context, width: u32, height: u32) {
+        let mut viewport_state = self.world.write_resource::<viewport::ViewportState>();
+        viewport_state.update_screen(width as f32, height as f32);
     }
 
     fn focus_event(&mut self, _ctx: &mut Context, gained: bool) {
         if gained {
-            self.paused = false;
         } else {
-            self.paused = true;
+        }
+    }
+
+    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: i32, y: i32) {
+        let mut viewport_state = self.world.write_resource::<viewport::ViewportState>();
+        if y < 0 {
+            viewport_state.decrease_zoom(0.1);
+        } else if y > 0 {
+            viewport_state.increase_zoom(0.1);
         }
     }
 

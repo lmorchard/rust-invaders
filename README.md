@@ -8,6 +8,12 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
+- [ ] Asteroid sizes that break up & spawn more on despawn
+    - [ ] 1 big -> 2 medium
+    - [ ] 1 medium -> 4 small
+    - [ ] 4 small -> none
+    - [ ] 1 giant slow mover -> spawns other sizes as it's damaged
+
 - [ ] Goals - score?
     - [ ] Planet limb below, has health & takes damage from asteroids, don't let it die
     - [ ] Survive time limit?
@@ -21,9 +27,7 @@ You know what? I just don't really know, but it'll be a mess.
 
 - [ ] Rework tags component to use Enum rather than arbitrary strings
 
-- [ ] Bullet entities should identify owner source for damage purposes
-
-- [ ] Implement additional tombstone types - i.e. big asteroid becomes 2 smaller ones
+- [ ] Bullet entities should identify owner source for damage
 
 - [ ] Implement despawn reasons and different tombstones (or lack thereof) based on reason
     - [ ] Asteroids should explode when shot, but just vanish when off playfield
@@ -39,15 +43,11 @@ You know what? I just don't really know, but it'll be a mess.
 
 - [ ] Debug HUD - easy way to monitor some variables, offer some switches & knobs
 
-- [ ] Game HUD - score, shields, planet health, etc
-
 - [ ] Weapons
 
 - [ ] Baddies
 
 - [ ] Proportional throttle control tied to controller joystick axes
-
-- [ ] Screen shake transforms for visual juice
 
 - [ ] Sound effects in a bleepy bloopy style
 
