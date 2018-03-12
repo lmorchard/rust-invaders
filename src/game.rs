@@ -30,7 +30,12 @@ pub struct HeroPlayer;
 pub struct HeroPlanet;
 
 pub fn update(world: &mut World) -> GameResult<()> {
-    if rand::random::<f32>() < 0.025 {
+    // Quick & dirty ramp up of difficulty relative to current score
+    let asteroid_spawn_chance = {
+        let player_score = world.read_resource::<score::PlayerScore>();
+        0.025 + (player_score.get() as f32 / 1500000.0)
+    };
+    if rand::random::<f32>() < asteroid_spawn_chance {
         spawn_asteroid(world);
     }
 
@@ -40,8 +45,8 @@ pub fn update(world: &mut World) -> GameResult<()> {
 pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> GameResult<()> {
     let scale = 50.0;
     let perc_scale = 4.0;
-    let base_x = (viewport::PLAYFIELD_WIDTH / 2.0) - (scale * 1.25);
-    let base_y = 0.0 - (viewport::PLAYFIELD_HEIGHT / 2.0) + (scale * 2.5);
+    let base_x = 0.0 - (viewport::PLAYFIELD_WIDTH / 2.0) + (scale * 1.0);
+    let base_y = 0.0 - (viewport::PLAYFIELD_HEIGHT / 2.0) + (scale * 0.5) + 4.0;
 
     let planets = world.read::<HeroPlanet>();
     let planet_healths = world.read::<health_damage::Health>();
@@ -64,10 +69,10 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
             ctx,
             graphics::DrawMode::Line(1.0),
             Rect::new(
-                base_x - (scale / 2.0),
-                base_y + (scale * 1.125),
-                scale,
+                base_x + (scale * 1.125),
+                base_y - (scale * 0.5),
                 perc_scale * perc,
+                scale,
             ),
         )?;
     }
@@ -82,7 +87,7 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
             ctx,
             &mesh,
             DrawParam {
-                dest: Point2::new(base_x - (scale * 1.25), base_y),
+                dest: Point2::new(base_x, base_y + (scale * 1.5)),
                 rotation: 0.0,
                 offset: Point2::new(0.5, 0.5),
                 scale: Point2::new(scale, scale),
@@ -93,10 +98,10 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
             ctx,
             graphics::DrawMode::Line(1.0),
             Rect::new(
-                base_x - (scale / 2.0) - (scale * 1.25),
-                base_y + (scale * 1.125),
-                scale,
+                base_x + (scale * 1.125),
+                base_y - (scale * 0.5) + (scale * 1.5),
                 perc_scale * perc,
+                scale,
             ),
         )?;
     }
@@ -214,13 +219,6 @@ pub fn spawn_asteroid(world: &mut World) {
             scale: Point2::new(size, size),
             ..Default::default()
         })
-        /*
-        .with(health_damage::DamageOnCollision {
-            damage: 50.0,
-            despawn: false,
-            ..Default::default()
-        })
-        */
         .with(despawn::DespawnBounds(Rect::new(
             0.0 - HW - 200.0,
             0.0 - HH - 200.0,
