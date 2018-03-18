@@ -7,7 +7,7 @@ use ggez::graphics::*;
 use plugins::*;
 use DeltaTime;
 
-use super::{prefabs, GameMode, GameModeManager, HeroPlanet, HeroPlayer};
+use super::{prefabs, reset_game, GameMode, GameModeManager, HeroPlanet, HeroPlayer};
 
 pub fn init<'a, 'b>(
     world: &mut World,
@@ -30,7 +30,7 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
             ctx,
             &format!("Ready {:1.2}", playing_state.ready_delay),
             fonts::DrawOptions {
-                x: -500.0,
+                x: -300.0,
                 y: -100.0,
                 scale: 3.0,
                 ..Default::default()
@@ -46,10 +46,10 @@ pub struct PlayingModeState {
 }
 impl PlayingModeState {
     pub fn new() -> PlayingModeState {
-        PlayingModeState { ready_delay: 3.0 }
+        PlayingModeState { ready_delay: 1.0 }
     }
     pub fn reset(&mut self) {
-        self.ready_delay = 3.0;
+        self.ready_delay = 1.0;
     }
     pub fn update(&mut self, delta_time: f32) {
         if self.ready_delay > 0.0 {
@@ -71,7 +71,7 @@ impl<'a> System<'a> for PlayingModeSystem {
         FetchMut<'a, GameModeManager>,
         FetchMut<'a, PlayingModeState>,
         FetchMut<'a, score::PlayerScore>,
-        Fetch<'a, player_control::Inputs>,
+        FetchMut<'a, player_control::Inputs>,
         ReadStorage<'a, HeroPlanet>,
         ReadStorage<'a, HeroPlayer>,
         WriteStorage<'a, thruster::ThrusterSet>,
@@ -94,7 +94,7 @@ impl<'a> System<'a> for PlayingModeSystem {
             mut game_mode,
             mut playing_state,
             mut player_score,
-            inputs,
+            mut inputs,
             hero_planets,
             hero_players,
             mut thruster_set,
@@ -106,13 +106,13 @@ impl<'a> System<'a> for PlayingModeSystem {
         ) = data;
 
         if game_mode.is_pending(GameMode::Playing) {
-            // Delete everything, add a new player and planet.
-            for entity in entities.join() {
-                entities.delete(entity);
-            }
+            reset_game(&entities, &mut inputs, true);
+            playing_state.reset();
+            player_score.reset();
             prefabs::player(entities.create(), &lazy);
             prefabs::planet(entities.create(), &lazy);
-            playing_state.reset();
+            game_mode.resolve();
+            return;
         }
 
         if !game_mode.is_current(GameMode::Playing) {

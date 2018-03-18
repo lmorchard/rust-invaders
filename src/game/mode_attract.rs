@@ -3,7 +3,7 @@ use rand;
 use specs::*;
 use ggez::*;
 use plugins::*;
-use super::{prefabs, GameMode, GameModeManager};
+use super::{prefabs, reset_game, GameMode, GameModeManager};
 
 pub fn init<'a, 'b>(
     _world: &mut World,
@@ -18,25 +18,25 @@ impl<'a> System<'a> for AttractModeSystem {
         Entities<'a>,
         Fetch<'a, LazyUpdate>,
         FetchMut<'a, GameModeManager>,
-        Fetch<'a, player_control::Inputs>,
+        FetchMut<'a, player_control::Inputs>,
         ReadStorage<'a, position_motion::Position>,
         ReadStorage<'a, collision::Collidable>,
     );
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, lazy, mut game_mode, inputs, positions, collidables) = data;
+        let (entities, lazy, mut game_mode, mut inputs, positions, collidables) = data;
 
         if game_mode.is_pending(GameMode::Attract) {
-            for entity in entities.join() {
-                entities.delete(entity);
-            }
+            reset_game(&entities, &mut inputs, true);
             prefabs::planet(entities.create(), &lazy);
+            game_mode.resolve();
+            return;
         }
 
         if !game_mode.is_current(GameMode::Attract) {
             return;
         }
 
-        if rand::random::<f32>() < 0.07 {
+        if rand::random::<f32>() < 0.1 {
             prefabs::asteroid(&positions, &collidables, entities.create(), &lazy);
         }
 
@@ -55,9 +55,9 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
     // let viewport_state = world.read_resource::<viewport::ViewportState>();
     font.draw(
         ctx,
-        "Rust Invaders v0.1\n<me@lmorchard.com>",
+        "  Rust Invaders v0.1\n<me@lmorchard.com>",
         fonts::DrawOptions {
-            x: -500.0,
+            x: -525.0,
             y: -100.0,
             scale: 3.0,
             ..Default::default()

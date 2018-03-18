@@ -34,6 +34,14 @@ impl Inputs {
             special: false,
         }
     }
+    pub fn reset(&mut self) {
+        self.left = false;
+        self.right = false;
+        self.up = false;
+        self.down = false;
+        self.fire = false;
+        self.special = false;
+    }
 }
 
 pub fn key_down_event(
@@ -41,8 +49,11 @@ pub fn key_down_event(
     _ctx: &mut Context,
     keycode: Keycode,
     _keymod: Mod,
-    _repeat: bool,
+    repeat: bool,
 ) {
+    if repeat {
+        return;
+    }
     let mut inputs = world.write_resource::<Inputs>();
     match keycode {
         Keycode::Up | Keycode::W => inputs.up = true,
@@ -60,8 +71,11 @@ pub fn key_up_event(
     _ctx: &mut Context,
     keycode: Keycode,
     _keymod: Mod,
-    _repeat: bool,
+    repeat: bool,
 ) {
+    if repeat {
+        return;
+    }
     let mut inputs = world.write_resource::<Inputs>();
     match keycode {
         Keycode::Up | Keycode::W => inputs.up = false,

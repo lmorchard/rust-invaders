@@ -1,5 +1,4 @@
 use specs::*;
-use ggez::*;
 use plugins::*;
 use DeltaTime;
 
@@ -14,10 +13,6 @@ pub fn init<'a, 'b>(
         "points_on_last_hit",
         &[],
     )
-}
-
-pub fn draw(_world: &mut World, _font: &mut fonts::Font, _ctx: &mut Context) -> GameResult<()> {
-    Ok(())
 }
 
 pub struct ScoreSystem;
@@ -83,6 +78,13 @@ impl PlayerScore {
             displayed: 0,
             factor: 10,
         }
+    }
+    pub fn reset(&mut self) {
+        self.current = 0;
+        self.displayed = 0;
+    }
+    pub fn reset_displayed(&mut self) {
+        self.displayed = 0;
     }
     pub fn get(&self) -> i32 {
         self.current

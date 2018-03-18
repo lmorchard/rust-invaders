@@ -24,21 +24,27 @@ pub fn init<'a, 'b>(
     dispatcher
 }
 
-pub fn update(_world: &mut World) -> GameResult<()> {
-    Ok(())
-}
-
-pub fn update_after(world: &mut World) -> GameResult<()> {
-    world.write_resource::<GameModeManager>().update()?;
-    Ok(())
-}
-
 pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> GameResult<()> {
     mode_attract::draw(world, font, ctx)?;
     mode_playing::draw(world, font, ctx)?;
     mode_game_over::draw(world, font, ctx)?;
     hud::draw(world, font, ctx)?;
     Ok(())
+}
+
+pub fn reset_game(
+    entities: &Entities,
+    inputs: &mut FetchMut<player_control::Inputs>,
+    delete_entities: bool,
+) {
+    inputs.reset();
+    if delete_entities {
+        for entity in entities.join() {
+            if let Err(e) = entities.delete(entity) {
+                println!("Error deleting entity: {:?}", e);
+            }
+        }
+    }
 }
 
 #[derive(Component, Debug)]
@@ -57,29 +63,28 @@ pub enum GameMode {
 pub struct GameModeManager {
     pub current_mode: GameMode,
     pub pending_mode: GameMode,
-    pub activated: bool,
+    pub resolved: bool,
 }
 impl GameModeManager {
     pub fn new() -> GameModeManager {
         GameModeManager {
             current_mode: GameMode::Attract,
             pending_mode: GameMode::Attract,
-            activated: false,
+            resolved: false,
         }
     }
     pub fn change(&mut self, mode: GameMode) {
         self.pending_mode = mode;
-        self.activated = false;
+        self.resolved = false;
     }
-    pub fn update(&mut self) -> GameResult<()> {
+    pub fn resolve(&mut self) {
         self.current_mode = self.pending_mode;
-        self.activated = true;
-        Ok(())
+        self.resolved = true;
     }
     pub fn is_pending(&self, mode: GameMode) -> bool {
-        self.pending_mode == mode && !self.activated
+        self.pending_mode == mode && !self.resolved
     }
     pub fn is_current(&self, mode: GameMode) -> bool {
-        self.current_mode == mode && self.activated
+        self.current_mode == mode && self.resolved
     }
 }
