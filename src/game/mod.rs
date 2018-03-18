@@ -1,14 +1,22 @@
-use specs::*;
-use ggez::*;
+use std::f32::consts::PI;
 use rand;
 
+use specs::*;
+use ggez::*;
+use ggez::graphics::*;
 use plugins::*;
-use ::*;
+
+pub mod prefabs;
+pub mod mode_attract;
+pub mod mode_playing;
+pub mod mode_game_over;
 
 pub fn init<'a, 'b>(
     world: &mut World,
     dispatcher: DispatcherBuilder<'a, 'b>,
 ) -> DispatcherBuilder<'a, 'b> {
+    world.add_resource(GameModeManager::new());
+
     world.register::<HeroPlanet>();
     world.register::<HeroPlayer>();
 
@@ -18,37 +26,13 @@ pub fn init<'a, 'b>(
         spawn_asteroid(world);
     }
 
+    let dispatcher = mode_attract::init(world, dispatcher);
+    let dispatcher = mode_playing::init(world, dispatcher);
+    let dispatcher = mode_game_over::init(world, dispatcher);
     dispatcher
         .add(DespawnMatchSystem, "despawn_match", &[])
         .add(CollisionMatchSystem, "collision_match", &[])
 }
-
-/*
-        Keycode::Escape => {
-            let entities = world.entities();
-            for entity in entities.join() {
-                entities.delete(entity);
-            }
-        },
-        Keycode::Tab => {
-            let entities = world.entities();
-            for (entity, tags) in (
-                &*entities,
-                &world.read::<metadata::Tags>()
-            ).join()
-            {
-                if tags.0.contains(&"enemy") {
-                    entities.delete(entity);
-                }
-            }
-        },
-*/
-
-#[derive(Component, Debug)]
-pub struct HeroPlayer;
-
-#[derive(Component, Debug)]
-pub struct HeroPlanet;
 
 pub fn update(world: &mut World) -> GameResult<()> {
     // Quick & dirty ramp up of difficulty relative to current score
@@ -62,10 +46,21 @@ pub fn update(world: &mut World) -> GameResult<()> {
     Ok(())
 }
 
+pub fn update_after(world: &mut World) -> GameResult<()> {
+    world.write_resource::<GameModeManager>().update()?;
+    Ok(())
+}
+
 pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> GameResult<()> {
+    mode_attract::draw(world, font, ctx)?;
+    mode_playing::draw(world, font, ctx)?;
+    mode_game_over::draw(world, font, ctx)?;
+
+    let viewport_state = world.read_resource::<viewport::ViewportState>();
+
     let scale = 50.0;
-    let base_x = 0.0 - (viewport::PLAYFIELD_WIDTH / 2.0) + (scale * 1.0);
-    let base_y = 0.0 - (viewport::PLAYFIELD_HEIGHT / 2.0) + (scale * 0.5) + 4.0;
+    let base_x = viewport_state.screen.x + scale * 1.5;
+    let base_y = viewport_state.screen.y + scale * 1.5;
     let planet_icon = sprites::Shape::PlanetIcon.build_mesh(ctx, 1.0 / scale);
     let player_icon = sprites::Shape::Player.build_mesh(ctx, 1.0 / scale);
 
@@ -109,7 +104,7 @@ pub fn draw_hud_gauge(
     scale: f32,
     base_x: f32,
     base_y: f32,
-    font: &mut fonts::Font,
+    _font: &mut fonts::Font,
     icon: &Mesh,
     perc: f32,
 ) -> GameResult<()> {
@@ -137,6 +132,49 @@ pub fn draw_hud_gauge(
     )?;
     Ok(())
 }
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub enum GameMode {
+    Attract,
+    Playing,
+    GameOver
+}
+
+pub struct GameModeManager {
+    pub current_mode: GameMode,
+    pub pending_mode: GameMode,
+    pub activated: bool
+}
+impl GameModeManager {
+    pub fn new() -> GameModeManager {
+        GameModeManager {
+            current_mode: GameMode::Attract,
+            pending_mode: GameMode::Attract,
+            activated: false
+        }
+    }
+    pub fn change(&mut self, mode: GameMode) {
+        self.pending_mode = mode;
+        self.activated = false;
+    }
+    pub fn update(&mut self) -> GameResult<()> {
+        self.current_mode = self.pending_mode;
+        self.activated = true;
+        Ok(())
+    }
+    pub fn is_pending(&self, mode: GameMode) -> bool {
+        self.pending_mode == mode && !self.activated
+    }
+    pub fn is_current(&self, mode: GameMode) -> bool {
+        self.current_mode == mode && self.activated
+    }
+}
+
+#[derive(Component, Debug)]
+pub struct HeroPlayer;
+
+#[derive(Component, Debug)]
+pub struct HeroPlanet;
 
 pub fn spawn_player(world: &mut World) {
     world
@@ -376,10 +414,10 @@ impl<'a> System<'a> for CollisionMatchSystem {
 impl CollisionMatchSystem {
     fn handle_match(
         &mut self,
-        lazy: &LazyUpdate,
-        player_score: &mut score::PlayerScore,
+        _lazy: &LazyUpdate,
+        _player_score: &mut score::PlayerScore,
         damages: &mut health_damage::DamageEventQueue,
-        despawns: &mut despawn::DespawnEventQueue,
+        _despawns: &mut despawn::DespawnEventQueue,
         viewport: &mut viewport::ViewportState,
         a_tag: &str,
         b_tag: &str,
@@ -396,7 +434,7 @@ impl CollisionMatchSystem {
                 viewport.shake(16.0, 0.3);
             }
             ("asteroid", "asteroid") => {
-                damages.hurt_mutual(*a_entity, *b_entity, 10.0);
+                // damages.hurt_mutual(*a_entity, *b_entity, 10.0);
             }
             ("player_bullet", "enemy") => {
                 damages.hurt_mutual(*a_entity, *b_entity, 100.0);

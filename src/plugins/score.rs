@@ -1,6 +1,7 @@
 use specs::*;
 use ggez::*;
 use plugins::*;
+use DeltaTime;
 
 pub fn init<'a, 'b>(
     world: &mut World,
@@ -8,29 +9,38 @@ pub fn init<'a, 'b>(
 ) -> DispatcherBuilder<'a, 'b> {
     world.add_resource(PlayerScore::new());
     world.register::<PointsOnLastHit>();
-    dispatcher.add(PointsOnLastHitSystem, "points_on_last_hit", &[])
-}
-
-pub fn update(world: &mut World) -> GameResult<()> {
-    let mut player_score = world.write_resource::<PlayerScore>();
-    player_score.update();
-    Ok(())
+    dispatcher
+        .add(ScoreSystem, "score_system", &[])
+        .add(PointsOnLastHitSystem, "points_on_last_hit", &[])
 }
 
 pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> GameResult<()> {
+    let viewport_state = world.read_resource::<viewport::ViewportState>();
     let player_score = world.read_resource::<PlayerScore>();
     font.draw(
         ctx,
         &format!("{:07}", player_score.get_displayed()),
         fonts::DrawOptions {
-            x: (viewport::PLAYFIELD_WIDTH / 2.0) - 25.0,
-            y: 0.0 - (viewport::PLAYFIELD_HEIGHT / 2.0) + 25.0,
+            x: viewport_state.screen.x + viewport_state.screen.w - 50.0,
+            y: viewport_state.screen.y + 75.0,
             scale: 3.0,
             reverse: true,
             ..Default::default()
         },
     )?;
     Ok(())
+}
+
+pub struct ScoreSystem;
+impl<'a> System<'a> for ScoreSystem {
+    type SystemData = (
+        Fetch<'a, DeltaTime>,
+        FetchMut<'a, PlayerScore>,
+    );
+    fn run(&mut self, data: Self::SystemData) {
+        let (_delta, mut player_score) = data;
+        player_score.update();
+    }
 }
 
 #[derive(Component, Debug)]
@@ -48,13 +58,13 @@ impl<'a> System<'a> for PointsOnLastHitSystem {
     );
     fn run(&mut self, data: Self::SystemData) {
         let (
-            entities,
+            _entities,
             mut player_score,
             despawn_events,
             points_on_last_hits,
             healths,
             tags,
-            sprites,
+            _sprites,
         ) = data;
         for despawn_event in &despawn_events.0 {
             let entity = despawn_event.entity;

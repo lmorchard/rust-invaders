@@ -9,16 +9,12 @@ pub fn init<'a, 'b>(
     dispatcher: DispatcherBuilder<'a, 'b>,
 ) -> DispatcherBuilder<'a, 'b> {
     world.register::<PlayerControl>();
-    world.add_resource(Inputs {
-        left: false,
-        right: false,
-        up: false,
-        down: false,
-        fire: false,
-        special: false,
-    });
-    dispatcher.add(PlayerControlSystem, "player_control", &[])
+    world.add_resource(Inputs::new());
+    dispatcher
 }
+
+#[derive(Component, Debug)]
+pub struct PlayerControl;
 
 #[derive(Debug)]
 pub struct Inputs {
@@ -28,6 +24,18 @@ pub struct Inputs {
     pub down: bool,
     pub fire: bool,
     pub special: bool,
+}
+impl Inputs {
+    pub fn new() -> Inputs {
+        Inputs {
+            left: false,
+            right: false,
+            up: false,
+            down: false,
+            fire: false,
+            special: false,
+        }
+    }
 }
 
 pub fn key_down_event(
@@ -103,45 +111,4 @@ pub fn controller_axis_event(
         "Axis Event: {:?} Value: {} Controller_Id: {}",
         axis, value, instance_id
     );
-}
-
-#[derive(Component, Debug)]
-pub struct PlayerControl;
-
-pub struct PlayerControlSystem;
-
-impl<'a> System<'a> for PlayerControlSystem {
-    type SystemData = (
-        Fetch<'a, DeltaTime>,
-        Fetch<'a, Inputs>,
-        WriteStorage<'a, thruster::ThrusterSet>,
-        WriteStorage<'a, guns::Gun>,
-    );
-
-    fn run(&mut self, data: Self::SystemData) {
-        let (_delta, inputs, mut thruster_set, mut gun) = data;
-        for (thruster_set, gun) in (&mut thruster_set, &mut gun).join() {
-            gun.firing = inputs.fire;
-
-            if let Some(lat_thruster) = thruster_set.0.get_mut("lateral") {
-                lat_thruster.throttle = if inputs.right {
-                    1.0
-                } else if inputs.left {
-                    -1.0
-                } else {
-                    0.0
-                }
-            }
-
-            if let Some(long_thruster) = thruster_set.0.get_mut("longitudinal") {
-                long_thruster.throttle = if inputs.up {
-                    1.0
-                } else if inputs.down {
-                    -1.0
-                } else {
-                    0.0
-                }
-            }
-        }
-    }
 }

@@ -16,7 +16,7 @@ pub fn init<'a, 'b>(
     dispatcher
 }
 
-pub fn update(world: &mut World, ctx: &mut Context) -> GameResult<()> {
+pub fn update(world: &mut World, _ctx: &mut Context) -> GameResult<()> {
     let mut viewport_state = world.write_resource::<ViewportState>();
     let delta = world.read_resource::<DeltaTime>();
     if viewport_state.shake_duration > 0.0 {
@@ -93,11 +93,6 @@ impl ViewportState {
         );
         let (visible_x, visible_y) = (0.0 - (visible_width / 2.0), 0.0 - (visible_height / 2.0));
 
-        self.screen = Rect::new(
-            visible_x,
-            visible_y,
-            visible_width,
-            visible_height,
-        );
+        self.screen = Rect::new(visible_x, visible_y, visible_width, visible_height);
     }
 }

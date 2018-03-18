@@ -33,7 +33,7 @@ pub fn draw(world: &mut World, ctx: &mut Context) -> GameResult<()> {
     let entities = world.entities();
     let positions = world.read::<position_motion::Position>();
     let sprites = world.read::<Sprite>();
-    let viewport_state = world.read_resource::<viewport::ViewportState>();
+    let _viewport_state = world.read_resource::<viewport::ViewportState>();
     let mut sprite_cache = world.write_resource::<SpriteCache>();
 
     let mut seen_entities: HashSet<Entity> = HashSet::new();

@@ -16,15 +16,11 @@ pub fn init<'a, 'b>(
     dispatcher
         .add(TimeoutSystem, "timeout_system", &[])
         .add(DespawnBoundsSystem, "despawn_bounds_system", &[])
-        .add(
-            DespawnOnCollisionSystem,
-            "despawn_on_collision_system",
-            &["damage_on_collision"],
-        )
+        .add(DespawnOnCollisionSystem, "despawn_on_collision_system", &[])
 }
 
 pub fn update(world: &mut World) -> GameResult<()> {
-    let mut entities = world.entities();
+    let entities = world.entities();
     let mut despawn_events = world.write_resource::<DespawnEventQueue>();
     for despawn_event in &despawn_events.0 {
         if let Err(err) = entities.delete(despawn_event.entity) {

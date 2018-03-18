@@ -41,7 +41,7 @@ impl<'a> System<'a> for GunSystem {
     fn run(&mut self, data: Self::SystemData) {
         let (entities, delta, lazy, positions, mut guns) = data;
         let delta = delta.0;
-        for (entity, position, gun) in (&*entities, &positions, &mut guns).join() {
+        for (_entity, position, gun) in (&*entities, &positions, &mut guns).join() {
             if gun.cooldown > 0.0 {
                 gun.cooldown -= delta;
                 continue;

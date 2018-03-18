@@ -6,11 +6,8 @@ extern crate specs;
 #[macro_use]
 extern crate specs_derive;
 
-use std::f32::consts::PI;
-
 use specs::*;
 use ggez::*;
-use ggez::graphics::*;
 
 pub mod game;
 pub mod plugins;

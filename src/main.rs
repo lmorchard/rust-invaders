@@ -28,8 +28,8 @@ pub fn main() {
         Ok(ref mut state) => {
             {
                 let (width, height) = graphics::get_size(ctx);
-                let mut viewport_state = state.world.write_resource::<viewport::ViewportState>();
-                viewport_state.update_screen(width as f32, height as f32);
+                let mut viewport = state.world.write_resource::<viewport::ViewportState>();
+                viewport.update_screen(width as f32, height as f32);
             }
             event::run(ctx, state).unwrap();
         }
@@ -54,29 +54,32 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         let mut world = World::new();
 
-        // TODO: This seems ugly, find a better pattern?
-        let dispatcher = DispatcherBuilder::new();
-        let dispatcher = init(&mut world, dispatcher);
-        let dispatcher = viewport::init(&mut world, dispatcher);
-        let dispatcher = metadata::init(&mut world, dispatcher);
-        let dispatcher = guns::init(&mut world, dispatcher);
-        let dispatcher = thruster::init(&mut world, dispatcher);
-        let dispatcher = collision::init(&mut world, dispatcher);
-        let dispatcher = bounce::init(&mut world, dispatcher);
-        let dispatcher = health_damage::init(&mut world, dispatcher);
-        let dispatcher = player_control::init(&mut world, dispatcher);
-        let dispatcher = simple_physics::init(&mut world, dispatcher);
-        let dispatcher = position_motion::init(&mut world, dispatcher);
-        let dispatcher = sprites::init(&mut world, dispatcher);
-        let dispatcher = despawn::init(&mut world, dispatcher);
-        let dispatcher = score::init(&mut world, dispatcher);
-        let dispatcher = game::init(&mut world, dispatcher);
-        let dispatcher = dispatcher.build();
+        let mut dispatcher = DispatcherBuilder::new();
+        let init_funcs = [
+            init,
+            viewport::init,
+            metadata::init,
+            guns::init,
+            thruster::init,
+            collision::init,
+            bounce::init,
+            health_damage::init,
+            player_control::init,
+            simple_physics::init,
+            position_motion::init,
+            sprites::init,
+            despawn::init,
+            score::init,
+            game::init,
+        ];
+        for init_func in init_funcs.iter() {
+            dispatcher = init_func(&mut world, dispatcher);
+        }
 
         Ok(MainState {
             font,
             world,
-            dispatcher,
+            dispatcher: dispatcher.build(),
         })
     }
 }
@@ -87,8 +90,8 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         viewport::update(&mut self.world, ctx)?;
         game::update(&mut self.world)?;
         self.dispatcher.dispatch(&self.world.res);
-        score::update(&mut self.world)?;
         despawn::update(&mut self.world)?;
+        game::update_after(&mut self.world)?;
         self.world.maintain();
         Ok(())
     }
@@ -102,12 +105,13 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         score::draw(&mut self.world, &mut self.font, ctx)?;
         game::draw(&mut self.world, &mut self.font, ctx)?;
         graphics::present(ctx);
+        timer::yield_now();
         Ok(())
     }
 
     fn resize_event(&mut self, _ctx: &mut Context, width: u32, height: u32) {
-        let mut viewport_state = self.world.write_resource::<viewport::ViewportState>();
-        viewport_state.update_screen(width as f32, height as f32);
+        let mut viewport = self.world.write_resource::<viewport::ViewportState>();
+        viewport.update_screen(width as f32, height as f32);
     }
 
     fn focus_event(&mut self, _ctx: &mut Context, gained: bool) {
@@ -117,11 +121,11 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
     }
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: i32, y: i32) {
-        let mut viewport_state = self.world.write_resource::<viewport::ViewportState>();
+        let mut viewport = self.world.write_resource::<viewport::ViewportState>();
         if y < 0 {
-            viewport_state.decrease_zoom(0.1);
+            viewport.decrease_zoom(0.1);
         } else if y > 0 {
-            viewport_state.increase_zoom(0.1);
+            viewport.increase_zoom(0.1);
         }
     }
 
