@@ -7,8 +7,7 @@ use plugins::*;
 use super::{HeroPlanet, HeroPlayer};
 
 pub fn player(entity: Entity, lazy: &LazyUpdate) {
-    let builder = LazyBuilder { entity, lazy };
-    builder
+    LazyBuilder { entity, lazy }
         .with(metadata::Name("player"))
         .with(metadata::Tags::new(vec!["player", "friend"]))
         .with(HeroPlayer)
@@ -56,8 +55,7 @@ pub fn player(entity: Entity, lazy: &LazyUpdate) {
 }
 
 pub fn planet(entity: Entity, lazy: &LazyUpdate) {
-    let builder = LazyBuilder { entity, lazy };
-    builder
+    LazyBuilder { entity, lazy }
         .with(HeroPlanet)
         .with(metadata::Tags::new(vec!["planet", "friend"]))
         .with(position_motion::Position {
@@ -85,17 +83,21 @@ pub fn planet(entity: Entity, lazy: &LazyUpdate) {
 const HW: f32 = viewport::PLAYFIELD_WIDTH / 2.0;
 const HH: f32 = viewport::PLAYFIELD_HEIGHT / 2.0;
 
-pub fn asteroid(world: &mut World) {
+pub fn asteroid(
+    positions: &ReadStorage<position_motion::Position>,
+    collidables: &ReadStorage<collision::Collidable>,
+    entity: Entity,
+    lazy: &LazyUpdate,
+) {
     let size = 25.0 + 150.0 * rand::random::<f32>();
     let x = 0.0 - HW + (viewport::PLAYFIELD_WIDTH / 8.0) * (rand::random::<f32>() * 8.0);
     let y = 0.0 - HH - size;
 
-    if !collision::is_empty_at(world, x, y, size) {
+    if !collision::is_empty_at(&positions, &collidables, x, y, size) {
         return;
     }
 
-    world
-        .create_entity()
+    LazyBuilder { entity, lazy }
         .with(metadata::Tags::new(vec!["asteroid", "enemy"]))
         .with(position_motion::Position {
             x,

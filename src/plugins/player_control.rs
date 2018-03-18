@@ -1,8 +1,6 @@
 use ggez::*;
 use ggez::event::{Axis, Button, Keycode, Mod};
 use specs::*;
-use plugins::*;
-use DeltaTime;
 
 pub fn init<'a, 'b>(
     world: &mut World,

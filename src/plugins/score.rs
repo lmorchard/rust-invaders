@@ -9,34 +9,20 @@ pub fn init<'a, 'b>(
 ) -> DispatcherBuilder<'a, 'b> {
     world.add_resource(PlayerScore::new());
     world.register::<PointsOnLastHit>();
-    dispatcher
-        .add(ScoreSystem, "score_system", &[])
-        .add(PointsOnLastHitSystem, "points_on_last_hit", &[])
+    dispatcher.add(ScoreSystem, "score_system", &[]).add(
+        PointsOnLastHitSystem,
+        "points_on_last_hit",
+        &[],
+    )
 }
 
-pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> GameResult<()> {
-    let viewport_state = world.read_resource::<viewport::ViewportState>();
-    let player_score = world.read_resource::<PlayerScore>();
-    font.draw(
-        ctx,
-        &format!("{:07}", player_score.get_displayed()),
-        fonts::DrawOptions {
-            x: viewport_state.screen.x + viewport_state.screen.w - 50.0,
-            y: viewport_state.screen.y + 75.0,
-            scale: 3.0,
-            reverse: true,
-            ..Default::default()
-        },
-    )?;
+pub fn draw(_world: &mut World, _font: &mut fonts::Font, _ctx: &mut Context) -> GameResult<()> {
     Ok(())
 }
 
 pub struct ScoreSystem;
 impl<'a> System<'a> for ScoreSystem {
-    type SystemData = (
-        Fetch<'a, DeltaTime>,
-        FetchMut<'a, PlayerScore>,
-    );
+    type SystemData = (Fetch<'a, DeltaTime>, FetchMut<'a, PlayerScore>);
     fn run(&mut self, data: Self::SystemData) {
         let (_delta, mut player_score) = data;
         player_score.update();
