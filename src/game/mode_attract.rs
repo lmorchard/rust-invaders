@@ -55,10 +55,10 @@ pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> Gam
     // let viewport_state = world.read_resource::<viewport::ViewportState>();
     font.draw(
         ctx,
-        "  Rust Invaders v0.1\n<me@lmorchard.com>",
+        "  Rust Invaders v0.1\n<me@lmorchard.com>\n\n  Press Fire to Start",
         fonts::DrawOptions {
             x: -525.0,
-            y: -100.0,
+            y: -200.0,
             scale: 3.0,
             ..Default::default()
         },

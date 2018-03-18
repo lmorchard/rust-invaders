@@ -117,13 +117,15 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         }
     }
 
-    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: i32, y: i32) {
+    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: i32, _y: i32) {
+        /*
         let mut viewport = self.world.write_resource::<viewport::ViewportState>();
         if y < 0 {
             viewport.decrease_zoom(0.1);
         } else if y > 0 {
             viewport.increase_zoom(0.1);
         }
+        */
     }
 
     fn key_down_event(&mut self, ctx: &mut Context, keycode: Keycode, keymod: Mod, repeat: bool) {
