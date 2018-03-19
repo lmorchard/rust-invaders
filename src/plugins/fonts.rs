@@ -1,6 +1,5 @@
 extern crate ggez;
 
-use std::fs::File;
 use std::error::Error;
 use std::io::BufReader;
 use std::io::prelude::*;
@@ -17,7 +16,7 @@ pub struct FontMeta {
 }
 
 pub const FUTURAL: FontMeta = FontMeta {
-    filename: "./hershey-fonts/futural.jhf",
+    filename: "/futural.jhf",
     line_height: 32.0,
     glyph_chars:
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 0123456789!?\"$/()|-+=*'#&\\^.,:;`[]{}<>~%@_",
@@ -204,8 +203,9 @@ impl Font {
     }
 
     // TODO: Make this code more robust & failure tolerant, rather than just panic & bail
-    pub fn load(&mut self) -> Result<(), Box<Error>> {
-        let f = File::open(self.meta.filename)?;
+    pub fn load(&mut self, ctx: &mut Context) -> Result<(), Box<Error>> {
+        // let f = File::open(self.meta.filename)?;
+        let f = ctx.filesystem.open(self.meta.filename)?;
 
         let ids_to_chars: HashMap<&i32, char> = self.meta
             .glyph_ids

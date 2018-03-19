@@ -8,6 +8,8 @@ You know what? I just don't really know, but it'll be a mess.
 
 ## TODO
 
+- [ ] Figure out how to automatically package / bundle this thing for distribution
+
 - [ ] Add text centering to font drawing
 
 - [ ] Asteroid sizes that break up & spawn more on despawn

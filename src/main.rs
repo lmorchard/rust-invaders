@@ -61,7 +61,7 @@ pub struct MainState<'a, 'b> {
 impl<'a, 'b> MainState<'a, 'b> {
     fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
         let mut font = fonts::Font::new(&fonts::FUTURAL);
-        if let Err(err) = font.load() {
+        if let Err(err) = font.load(ctx) {
             return Err(GameError::FontError(format!(
                 "Failed to load font: {:?}",
                 err

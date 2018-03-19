@@ -70,12 +70,8 @@ impl SoundEffects {
     pub fn new(ctx: &mut Context) -> GameResult<SoundEffects> {
         Ok(SoundEffects {
             currently_playing: Vec::new(),
-            ready: vec![
-                audio::SoundData::new(ctx, "/ready01.wav")?,
-            ],
-            game_over: vec![
-                audio::SoundData::new(ctx, "/gameover01.wav")?,
-            ],
+            ready: vec![audio::SoundData::new(ctx, "/ready01.wav")?],
+            game_over: vec![audio::SoundData::new(ctx, "/gameover01.wav")?],
             explosions: vec![
                 audio::SoundData::new(ctx, "/explosion01.wav")?,
                 audio::SoundData::new(ctx, "/explosion02.wav")?,
