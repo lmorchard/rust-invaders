@@ -11,6 +11,8 @@ use DeltaTime;
 
 use super::{prefabs, reset_game, GameMode, GameModeManager, HeroPlanet, HeroPlayer};
 
+const PLAYER_REGEN_PER_SECOND: f32 = 15.0;
+
 pub fn init<'a, 'b>(
     world: &mut World,
     dispatcher: DispatcherBuilder<'a, 'b>,
@@ -77,6 +79,7 @@ impl<'a> System<'a> for PlayingModeSystem {
         FetchMut<'a, player_control::Inputs>,
         ReadStorage<'a, HeroPlanet>,
         ReadStorage<'a, HeroPlayer>,
+        ReadStorage<'a, health_damage::Health>,
         WriteStorage<'a, thruster::ThrusterSet>,
         WriteStorage<'a, guns::Gun>,
         ReadStorage<'a, position_motion::Position>,
@@ -101,6 +104,7 @@ impl<'a> System<'a> for PlayingModeSystem {
             mut inputs,
             hero_planets,
             hero_players,
+            healths,
             mut thruster_set,
             mut gun,
             positions,
@@ -140,7 +144,11 @@ impl<'a> System<'a> for PlayingModeSystem {
             hero_planet_alive = true;
         }
         let mut hero_player_alive = false;
-        for (_entity, _hero_player) in (&*entities, &hero_players).join() {
+        for (entity, _hero_player, health) in (&*entities, &hero_players, &healths).join() {
+            // Slowly regenerate the player while alive
+            if health.health < health.max_health {
+                damages.heal(entity, entity, PLAYER_REGEN_PER_SECOND * delta.0);
+            }
             hero_player_alive = true;
         }
         if !hero_planet_alive || !hero_player_alive {
