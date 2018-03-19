@@ -1,8 +1,10 @@
 use specs::*;
 use ggez::*;
 use plugins::*;
+use game::*;
 use DeltaTime;
 use super::{reset_game, GameMode, GameModeManager, HeroPlayer};
+use game::sound_effects::SoundEffectType;
 
 const RESET_TTL_MAX: f32 = 10.0;
 
@@ -40,6 +42,7 @@ impl<'a> System<'a> for GameOverModeSystem {
         Fetch<'a, DeltaTime>,
         FetchMut<'a, GameModeManager>,
         FetchMut<'a, GameOverModeState>,
+        FetchMut<'a, sound_effects::SoundEffectQueue>,
         FetchMut<'a, player_control::Inputs>,
         FetchMut<'a, score::PlayerScore>,
         ReadStorage<'a, HeroPlayer>,
@@ -50,6 +53,7 @@ impl<'a> System<'a> for GameOverModeSystem {
             delta,
             mut game_mode,
             mut game_over_state,
+            mut sounds,
             mut inputs,
             mut score,
             hero_players,
@@ -64,6 +68,7 @@ impl<'a> System<'a> for GameOverModeSystem {
             game_over_state.reset();
             // HACK: Reset displayed score.
             score.reset_displayed();
+            sounds.play(SoundEffectType::Ready);
             game_mode.resolve();
             return;
         }

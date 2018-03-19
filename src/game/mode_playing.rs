@@ -115,6 +115,7 @@ impl<'a> System<'a> for PlayingModeSystem {
             player_score.reset();
             prefabs::player(entities.create(), &lazy);
             prefabs::planet(entities.create(), &lazy);
+            sounds.play(SoundEffectType::Ready);
             game_mode.resolve();
             return;
         }
