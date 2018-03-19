@@ -2,6 +2,8 @@ use specs::*;
 use ggez::graphics::{Point2, Rect};
 use DeltaTime;
 use plugins::*;
+use game::*;
+use game::sound_effects::SoundEffectType;
 
 pub fn init<'a, 'b>(
     world: &mut World,
@@ -34,12 +36,13 @@ impl<'a> System<'a> for GunSystem {
         Entities<'a>,
         Fetch<'a, DeltaTime>,
         Fetch<'a, LazyUpdate>,
+        FetchMut<'a, sound_effects::SoundEffectQueue>,
         ReadStorage<'a, position_motion::Position>,
         WriteStorage<'a, Gun>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, delta, lazy, positions, mut guns) = data;
+        let (entities, delta, lazy, mut sounds, positions, mut guns) = data;
         let delta = delta.0;
         for (_entity, position, gun) in (&*entities, &positions, &mut guns).join() {
             if gun.cooldown > 0.0 {
@@ -50,6 +53,8 @@ impl<'a> System<'a> for GunSystem {
                 continue;
             }
             gun.cooldown = gun.period;
+
+            sounds.play(SoundEffectType::Shot);
 
             let bullet = entities.create();
             lazy.insert(

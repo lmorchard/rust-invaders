@@ -7,6 +7,7 @@ pub mod mode_attract;
 pub mod mode_game_over;
 pub mod mode_playing;
 pub mod prefabs;
+pub mod sound_effects;
 
 pub fn init<'a, 'b>(
     world: &mut World,
@@ -18,17 +19,24 @@ pub fn init<'a, 'b>(
     world.register::<HeroPlayer>();
 
     let dispatcher = hud::init(world, dispatcher);
+    let dispatcher = sound_effects::init(world, dispatcher);
     let dispatcher = mode_attract::init(world, dispatcher);
     let dispatcher = mode_playing::init(world, dispatcher);
     let dispatcher = mode_game_over::init(world, dispatcher);
     dispatcher
 }
 
-pub fn draw(world: &mut World, font: &mut fonts::Font, ctx: &mut Context) -> GameResult<()> {
+pub fn draw(
+    world: &mut World,
+    ctx: &mut Context,
+    font: &mut fonts::Font,
+    sound_effects: &mut sound_effects::SoundEffects,
+) -> GameResult<()> {
     mode_attract::draw(world, font, ctx)?;
     mode_playing::draw(world, font, ctx)?;
     mode_game_over::draw(world, font, ctx)?;
     hud::draw(world, font, ctx)?;
+    sound_effects::play(world, ctx, sound_effects)?;
     Ok(())
 }
 

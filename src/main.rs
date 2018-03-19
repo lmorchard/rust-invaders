@@ -3,21 +3,36 @@ extern crate invaders;
 extern crate rand;
 extern crate specs;
 
+use std::env;
+use std::path;
 use ggez::*;
 use ggez::event::*;
-
 use specs::*;
-
 use invaders::*;
 use invaders::plugins::*;
 
 pub fn main() {
-    let mut c = conf::Conf::new();
-    c.window_setup.title = String::from("Rust Invaders!");
-    c.window_setup.samples = conf::NumSamples::Four;
-    c.window_setup.resizable = true;
+    let mut cb = ContextBuilder::new("rustinvaders", "ggez")
+        .window_setup(
+            conf::WindowSetup::default()
+                .title("Rust Invaders")
+                .resizable(true)
+                .samples(4)
+                .unwrap(),
+        )
+        .window_mode(conf::WindowMode::default().dimensions(800, 600));
 
-    let ctx = &mut Context::load_from_conf("invaders", "ggez", c).unwrap();
+    if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
+        let mut path = path::PathBuf::from(manifest_dir);
+        path.push("resources");
+        println!("Adding path {:?}", path);
+        cb = cb.add_resource_path(path);
+    } else {
+        println!("Not building from cargo?  Ok.");
+    }
+
+    let ctx = &mut cb.build().unwrap();
+
     ctx.print_resource_stats();
 
     match MainState::new(ctx) {
@@ -40,10 +55,11 @@ pub struct MainState<'a, 'b> {
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
     font: plugins::fonts::Font,
+    sound_effects: game::sound_effects::SoundEffects,
 }
 
 impl<'a, 'b> MainState<'a, 'b> {
-    fn new(_ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
+    fn new(ctx: &mut Context) -> GameResult<MainState<'a, 'b>> {
         let mut font = fonts::Font::new(&fonts::FUTURAL);
         if let Err(err) = font.load() {
             return Err(GameError::FontError(format!(
@@ -76,9 +92,12 @@ impl<'a, 'b> MainState<'a, 'b> {
             dispatcher = init_func(&mut world, dispatcher);
         }
 
+        let sound_effects = game::sound_effects::SoundEffects::new(ctx)?;
+
         Ok(MainState {
             font,
             world,
+            sound_effects,
             dispatcher: dispatcher.build(),
         })
     }
@@ -100,7 +119,12 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         graphics::set_color(ctx, graphics::WHITE)?;
         viewport::draw(&mut self.world, ctx)?;
         sprites::draw(&mut self.world, ctx)?;
-        game::draw(&mut self.world, &mut self.font, ctx)?;
+        game::draw(
+            &mut self.world,
+            ctx,
+            &mut self.font,
+            &mut self.sound_effects,
+        )?;
         graphics::present(ctx);
         timer::yield_now();
         Ok(())

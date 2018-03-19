@@ -5,6 +5,8 @@ use specs::*;
 use ggez::*;
 use ggez::graphics::*;
 use plugins::*;
+use game::*;
+use game::sound_effects::SoundEffectType;
 use DeltaTime;
 
 use super::{prefabs, reset_game, GameMode, GameModeManager, HeroPlanet, HeroPlayer};
@@ -66,6 +68,7 @@ impl<'a> System<'a> for PlayingModeSystem {
         Fetch<'a, DeltaTime>,
         FetchMut<'a, health_damage::DamageEventQueue>,
         FetchMut<'a, despawn::DespawnEventQueue>,
+        FetchMut<'a, sound_effects::SoundEffectQueue>,
         Fetch<'a, collision::Collisions>,
         FetchMut<'a, viewport::ViewportState>,
         FetchMut<'a, GameModeManager>,
@@ -89,6 +92,7 @@ impl<'a> System<'a> for PlayingModeSystem {
             delta,
             mut damages,
             mut despawns,
+            mut sounds,
             collisions,
             mut viewport,
             mut game_mode,
@@ -172,7 +176,15 @@ impl<'a> System<'a> for PlayingModeSystem {
                 (tags.get(entity), positions.get(entity), sprites.get(entity))
             {
                 for &tag in &tags.0 {
-                    self.handle_despawn(&entities, &lazy, &despawn_event, tag, &position, &sprite);
+                    self.handle_despawn(
+                        &entities,
+                        &lazy,
+                        &mut sounds,
+                        &despawn_event,
+                        tag,
+                        &position,
+                        &sprite,
+                    );
                 }
             }
         }
@@ -188,6 +200,7 @@ impl<'a> System<'a> for PlayingModeSystem {
                                     &mut player_score,
                                     &mut damages,
                                     &mut despawns,
+                                    &mut sounds,
                                     &mut viewport,
                                     &a_tag,
                                     &b_tag,
@@ -208,6 +221,7 @@ impl PlayingModeSystem {
         &mut self,
         entities: &Entities,
         lazy: &LazyUpdate,
+        sounds: &mut sound_effects::SoundEffectQueue,
         despawn_event: &despawn::DespawnEvent,
         tag: &str,
         position: &position_motion::Position,
@@ -215,6 +229,8 @@ impl PlayingModeSystem {
     ) {
         if despawn_event.reason == despawn::DespawnReason::Health {
             if tag == "asteroid" {
+                sounds.play(SoundEffectType::Explosion);
+
                 let explosion = entities.create();
                 lazy.insert(explosion, despawn::Timeout(0.5));
                 lazy.insert(
@@ -250,6 +266,7 @@ impl PlayingModeSystem {
         _player_score: &mut score::PlayerScore,
         damages: &mut health_damage::DamageEventQueue,
         _despawns: &mut despawn::DespawnEventQueue,
+        sounds: &mut sound_effects::SoundEffectQueue,
         viewport: &mut viewport::ViewportState,
         a_tag: &str,
         b_tag: &str,
@@ -260,10 +277,12 @@ impl PlayingModeSystem {
             ("asteroid", "player") => {
                 damages.hurt_mutual(*a_entity, *b_entity, 100.0);
                 viewport.shake(16.0, 0.3);
+                sounds.play(SoundEffectType::Shield);
             }
             ("asteroid", "planet") => {
                 damages.hurt_mutual(*a_entity, *b_entity, 100.0);
                 viewport.shake(16.0, 0.3);
+                sounds.play(SoundEffectType::PlanetHit);
             }
             ("asteroid", "asteroid") => {
                 // damages.hurt_mutual(*a_entity, *b_entity, 10.0);
