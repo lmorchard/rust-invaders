@@ -1,8 +1,32 @@
 use std::env;
+use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
+
+const LIB_SDL: &str = "/usr/local/lib/libSDL2.so";
 
 fn main() {
     let target = env::var("TARGET").unwrap();
+
+    if target.contains("unknown-linux") {
+        // HACK: Set up a host-accesible writable path to copy libSDL2.so when using cross
+        let target_dir = PathBuf::from(env::var("CARGO_TARGET_DIR").unwrap());
+        let mut lib_dir = target_dir.clone();
+        lib_dir.push(target.clone());
+        lib_dir.push("release");
+        lib_dir.push("lib");
+
+        let lib_sdl_path = fs::canonicalize(LIB_SDL).unwrap();
+
+        let mut new_file_path = lib_dir.clone();
+        new_file_path.push("libSDL2.so");
+
+        let _ = fs::create_dir_all(&lib_dir);
+
+        fs::copy(lib_sdl_path.as_path(), new_file_path.as_path())
+            .expect("Couldn't copy libSDL2.so");
+    }
+
     if target.contains("pc-windows") {
         let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
         let mut lib_dir = manifest_dir.clone();

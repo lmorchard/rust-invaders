@@ -1,22 +1,37 @@
 extern crate ggez;
 extern crate invaders;
 
+use std::env;
+use std::path;
 use ggez::*;
-
 use invaders::plugins::*;
 
 fn main() {
-    let mut c = conf::Conf::new();
-    c.window_setup.title = String::from("Fonts - Rust Invaders!");
-    c.window_setup.samples = conf::NumSamples::Eight;
-    c.window_setup.resizable = true;
+    let mut cb = ContextBuilder::new("rustinvaders", "ggez")
+        .window_setup(
+            conf::WindowSetup::default()
+                .title("Rust Invaders")
+                .resizable(true)
+                .samples(4)
+                .unwrap(),
+        )
+        .window_mode(conf::WindowMode::default().dimensions(800, 600));
 
-    let ctx = &mut Context::load_from_conf("fonts", "ggez", c).unwrap();
+    if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
+        let mut path = path::PathBuf::from(manifest_dir);
+        path.push("resources");
+        println!("Adding path {:?}", path);
+        cb = cb.add_resource_path(path);
+    } else {
+        println!("Not building from cargo?  Ok.");
+    }
+
+    let ctx = &mut cb.build().unwrap();
 
     graphics::set_background_color(ctx, (0, 0, 0, 255).into());
 
     let mut font = fonts::Font::new(&fonts::FUTURAL);
-    font.load().unwrap();
+    font.load(ctx).unwrap();
 
     let state = &mut MainState::new(font).unwrap();
     event::run(ctx, state).unwrap();

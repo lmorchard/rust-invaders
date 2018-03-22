@@ -74,9 +74,8 @@ impl event::EventHandler for MainState {
         let mut pos_y = 75.0;
 
         for idx in 0..self.meshes.len() {
-            let selection = &self.shapes[idx];
-            let mesh =
-                &self.meshes[idx].get_or_insert_with(|| build_mesh(selection, ctx, 1.0 / 100.0));
+            let shape = &self.shapes[idx];
+            let mesh = &self.meshes[idx].get_or_insert_with(|| shape.build_mesh(ctx, 1.0 / 100.0));
             graphics::draw_ex(
                 ctx,
                 *mesh,

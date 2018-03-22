@@ -1,0 +1,13 @@
+FROM japaric/x86_64-unknown-linux-gnu:latest
+
+RUN apt-get update && \
+    apt-get -y build-dep libsdl1.2-dev && \
+    apt-get -y install mercurial
+
+RUN hg clone https://hg.libsdl.org/SDL
+
+RUN cd SDL && \
+    mkdir build && cd build && \
+    ../configure && \
+    make && \
+    make install

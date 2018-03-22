@@ -17,37 +17,51 @@ pub fn main() {
     c.window_setup.samples = conf::NumSamples::Four;
     c.window_setup.resizable = true;
 
-    let ctx = &mut Context::load_from_conf("invaders", "ggez", c).unwrap();
+    let ctx = &mut Context::load_from_conf("bounce", "ggez", c).unwrap();
 
     ctx.print_resource_stats();
+    graphics::set_background_color(ctx, (0, 0, 0, 255).into());
 
-    let state = &mut MainState::new().unwrap();
-    let (width, height) = graphics::get_size(ctx);
-    update_screen_coordinates(ctx, state.zoom, width, height);
-
-    event::run(ctx, state).unwrap();
+    match MainState::new() {
+        Err(e) => {
+            println!("Could not load game!");
+            println!("Error: {}", e);
+        }
+        Ok(ref mut state) => {
+            {
+                let (width, height) = graphics::get_size(ctx);
+                let mut viewport = state.world.write_resource::<viewport::ViewportState>();
+                viewport.update_screen(width as f32, height as f32);
+            }
+            event::run(ctx, state).unwrap();
+        }
+    }
 }
 
 struct MainState<'a, 'b> {
     world: World,
     dispatcher: Dispatcher<'a, 'b>,
-    zoom: f32,
 }
 
 impl<'a, 'b> MainState<'a, 'b> {
     fn new() -> GameResult<MainState<'a, 'b>> {
         let mut world = World::new();
 
-        let dispatcher = DispatcherBuilder::new();
-        let dispatcher = init(&mut world, dispatcher);
-        let dispatcher = collision::init(&mut world, dispatcher);
-        let dispatcher = bounce::init(&mut world, dispatcher);
-        let dispatcher = health_damage::init(&mut world, dispatcher);
-        let dispatcher = simple_physics::init(&mut world, dispatcher);
-        let dispatcher = position_motion::init(&mut world, dispatcher);
-        let dispatcher = sprites::init(&mut world, dispatcher);
-        let dispatcher = despawn::init(&mut world, dispatcher);
-        let dispatcher = dispatcher.build();
+        let mut dispatcher = DispatcherBuilder::new();
+        let init_funcs = [
+            init,
+            viewport::init,
+            collision::init,
+            bounce::init,
+            health_damage::init,
+            simple_physics::init,
+            position_motion::init,
+            sprites::init,
+            despawn::init,
+        ];
+        for init_func in init_funcs.iter() {
+            dispatcher = init_func(&mut world, dispatcher);
+        }
 
         for _idx in 0..10 {
             spawn_asteroid(&mut world);
@@ -55,8 +69,7 @@ impl<'a, 'b> MainState<'a, 'b> {
 
         Ok(MainState {
             world,
-            dispatcher,
-            zoom: 1.0,
+            dispatcher: dispatcher.build(),
         })
     }
 }
@@ -81,13 +94,14 @@ impl<'a, 'b> event::EventHandler for MainState<'a, 'b> {
         Ok(())
     }
 
-    fn resize_event(&mut self, ctx: &mut Context, width: u32, height: u32) {
-        update_screen_coordinates(ctx, self.zoom, width, height);
+    fn resize_event(&mut self, _ctx: &mut Context, width: u32, height: u32) {
+        let mut viewport = self.world.write_resource::<viewport::ViewportState>();
+        viewport.update_screen(width as f32, height as f32);
     }
 }
 
-const HW: f32 = PLAYFIELD_WIDTH / 2.0;
-const HH: f32 = PLAYFIELD_HEIGHT / 2.0;
+const HW: f32 = viewport::PLAYFIELD_WIDTH / 2.0;
+const HH: f32 = viewport::PLAYFIELD_HEIGHT / 2.0;
 
 fn spawn_asteroid(world: &mut World) {
     let x = if rand::random::<f32>() > 0.5 {
@@ -100,12 +114,16 @@ fn spawn_asteroid(world: &mut World) {
     } else {
         0.0 - 200.0 - rand::random::<f32>() * 500.0
     };
-    let y = (0.0 - HH) + (PLAYFIELD_HEIGHT / 12.0) * (rand::random::<f32>() * 12.0);
+    let y = (0.0 - HH) + (viewport::PLAYFIELD_HEIGHT / 12.0) * (rand::random::<f32>() * 12.0);
 
     let size = 25.0 + 150.0 * rand::random::<f32>();
 
-    if !collision::is_empty_at(world, x, y, size) {
-        return;
+    {
+        let positions = world.read::<position_motion::Position>();
+        let collidables = world.read::<collision::Collidable>();
+        if !collision::is_empty_at(&positions, &collidables, x, y, size) {
+            return;
+        }
     }
 
     world
@@ -141,6 +159,6 @@ fn spawn_asteroid(world: &mut World) {
         //    ..Default::default()
         //})
         //.with(health_damage::Health(100.0))
-        .with(despawn::Tombstone)
+        //.with(despawn::Tombstone)
         .build();
 }
